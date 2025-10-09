@@ -70,12 +70,12 @@ void StatTrie::remove (string word) {
     if (ptr->isEnd) {
         count_t reduction = ptr->count;
         for (pair<const char, Node*>& p : ptr->children) reduction -= p.second->count;
-        for (size_t i = n-1; i >= 1; --i) {
-            stack[i]->count -= reduction;
-            if (stack[i]->count == 0) {
-                delete ptr;
+        for (size_t i = n-1; i >= 0; --i) {
+            stack[i+1]->count -= reduction;
+            if (stack[i+1]->count == 0) {
+                delete stack[i+1];
                 --countNodes;
-                stack[i-1]->children.erase(word[i]);
+                stack[i]->children.erase(word[i]);
             }
         }
         --countUniqueWords;
