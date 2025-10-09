@@ -53,8 +53,63 @@ bool StatTrie::startWith (string prefix) const {
     return true;
 }
 
+void StatTrie::remove (string word) {
+
+    const size_t n = word.size();
+    Node* ptr = &root;
+    Node* stack[n+1];
+    stack[0] = &root;
+    for (size_t i = 0; i < n; ++i) {
+        if (ptr->children.count(word[i])) {
+            ptr = ptr->children[word[i]];
+            stack[i+1] = ptr;
+        }
+        else return;
+    }
+
+    if (ptr->isEnd) {
+        count_t reduction = ptr->count;
+        for (pair<const char, Node*>& p : ptr->children) reduction -= p.second->count;
+        for (size_t i = n-1; i >= 1; --i) {
+            stack[i]->count -= reduction;
+            if (stack[i]->count == 0) {
+                delete ptr;
+                --countNodes;
+                stack[i-1]->children.erase(word[i]);
+            }
+        }
+        --countUniqueWords;
+        countInsertedWords -= reduction;
+        countInsertedChar -= n * reduction;
+    }
+}
+
 void StatTrie::clear() {
     for (pair<const char, Node*> p : root.children) delete p.second;
+    root.children.clear();
     countInsertedWords = countUniqueWords = countInsertedChar = 0;
     countNodes = 1;
+}
+
+
+/* ---------- STATISTICAL METHODS ---------- */
+
+count_t StatTrie::totalNodes() const {
+    return countNodes;
+}
+
+count_t StatTrie::totalInsertedCharacters() const {
+    return countInsertedChar;
+}
+
+count_t StatTrie::totalInsertedWords() const {
+    return countInsertedWords;
+}
+
+count_t StatTrie::totalUniqueWords() const {
+    return countUniqueWords;
+}
+
+void StatTrie::setAnomalyRate (double rate) {
+    anomalyRate = rate;
 }
