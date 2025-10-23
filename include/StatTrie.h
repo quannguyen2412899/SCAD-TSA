@@ -47,6 +47,8 @@ class StatTrie {
     count_t totalUniqueWords() const;
 
     void setAnomalyRate (double rate);
+    double getAnomalyRate ();
+    
 };
 
 

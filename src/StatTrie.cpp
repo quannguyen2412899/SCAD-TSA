@@ -4,7 +4,7 @@ using namespace std;
 
 /* ---------- CONSTRUCTORS AND DESTRUCTORS ---------- */
 
-StatTrie::StatTrie(double anomalyRate = 0.001) {
+StatTrie::StatTrie(double anomalyRate) {
     this->anomalyRate = anomalyRate;
     countInsertedWords = countUniqueWords = countInsertedChar = 0;
     countNodes = 1;
@@ -68,9 +68,10 @@ void StatTrie::remove (string word) {
     }
 
     if (ptr->isEnd) {
+        ptr->isEnd = false;
         count_t reduction = ptr->count;
         for (pair<const char, Node*>& p : ptr->children) reduction -= p.second->count;
-        for (size_t i = n-1; i >= 0; --i) {
+        for (int i = n-1; i >= 0; --i) {
             stack[i+1]->count -= reduction;
             if (stack[i+1]->count == 0) {
                 delete stack[i+1];
@@ -111,5 +112,9 @@ count_t StatTrie::totalUniqueWords() const {
 }
 
 void StatTrie::setAnomalyRate (double rate) {
-    anomalyRate = rate;
+    if (rate <= 1 && rate > 0) anomalyRate = rate;
+}
+
+double StatTrie::getAnomalyRate() {
+    return anomalyRate;
 }
