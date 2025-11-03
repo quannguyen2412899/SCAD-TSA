@@ -11,9 +11,22 @@ StatTrie::StatTrie(double anomalyRate) {
 }
 
 
+/* ---------- HELPERS ---------- */
+
+void StatTrie::_traverse (function<void(const Node*, const string&)> &callback, const Node* currNode, string &prefix) const {
+    callback (currNode, prefix);
+    for (const pair<const char, Node*> &p : currNode->children) {
+        prefix.push_back (p.first);
+        _traverse (callback, p.second, prefix);
+        prefix.pop_back();
+    }
+}
+
+
 /* ---------- BASIC METHODS ---------- */
 
 void StatTrie::insert (string word) {
+    if (word.size() == 0) return;
     Node* ptr = &root;
     for (char c : word) {
         if (!ptr->children.count(c)) {
@@ -117,4 +130,9 @@ void StatTrie::setAnomalyRate (double rate) {
 
 double StatTrie::getAnomalyRate() {
     return anomalyRate;
+}
+
+void StatTrie::traverse (function<void(const Node*, const string&)> callback) const {
+    string prefix;
+    _traverse (callback, &root, prefix);
 }
