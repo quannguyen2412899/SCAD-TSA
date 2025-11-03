@@ -4,6 +4,7 @@
 
 #include <unordered_map>
 #include <string>
+#include<iostream>
 typedef unsigned int count_t;
 
 using namespace std;
@@ -48,6 +49,11 @@ class StatTrie {
 
     void setAnomalyRate (double rate);
     double getAnomalyRate ();
+    void printTrie() const;
+
+private:
+void printNode(const Node* node, string prefix) const;
+
     
 };
 

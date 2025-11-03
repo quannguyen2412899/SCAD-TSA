@@ -118,3 +118,23 @@ void StatTrie::setAnomalyRate (double rate) {
 double StatTrie::getAnomalyRate() {
     return anomalyRate;
 }
+
+/* ---------- PRINT TRIE STRUCTURE ---------- */
+
+void StatTrie::printNode(const Node* node, string prefix) const {
+    // Nếu là từ kết thúc -> in ra thông tin
+    if (node->isEnd) {
+        cout << prefix << "  (count=" << node->count << ")" << endl;
+    }
+
+    // Duyệt qua từng nhánh con
+    for (const auto& p : node->children) {
+        char c = p.first;
+        printNode(p.second, prefix + c);
+    }
+}
+
+void StatTrie::printTrie() const {
+    cout << "\n=== Trie Structure (prefix + count) ===" << endl;
+    printNode(&root, "");
+}

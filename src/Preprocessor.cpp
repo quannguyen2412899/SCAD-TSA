@@ -18,7 +18,7 @@ void Preprocessor::setDelimiters(const string& chars) {
 string Preprocessor::cleanLine(const string& line, bool toLower, const unordered_set<char>& ignored) {
     string result;
     for (char c : line) {
-        if (ignored.count(c)) continue;
+        if (ignored.count(c) || isdigit(c)) continue;
         result += toLower ? (char)tolower(c) : c;
     }
     return result;

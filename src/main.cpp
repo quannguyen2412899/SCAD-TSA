@@ -12,7 +12,7 @@ int main() {
     Preprocessor prep(filepath, true, false); // không chia chuỗi
     prep.setIgnoredCharacters(",;:[](){}<>\"'-= ");
     prep.setDelimiters(".!?"); // chỉ dùng cho text, nhưng log cũng OK
-    prep.run(DataType::TEXT);
+    prep.run(DataType::LOG);
 
     const vector<string>& data = prep.getProcessedData();
     cout << "Total processed entries: " << data.size() << endl;
@@ -42,6 +42,10 @@ int main() {
     cout <<"\nCheck startwith" << endl;
     string str = "conm";
     cout << "Startwith '" << str << "' ? "
-         << (trie.startWith(testStr) ? "YES" : "NO") << endl;
+         << (trie.startWith(str) ? "YES" : "NO") << endl;
+
+    trie.remove("conchonbk");
+    cout << "\nPrint Tree" << endl;
+    //trie.printTrie();
     return 0;
 }
