@@ -4,14 +4,17 @@
 
 #include <unordered_map>
 #include <string>
-#include<iostream>
+#include <functional>
+
 typedef unsigned int count_t;
 
 using namespace std;
 
+class Analysis;
+
 class StatTrie {
 
-    private:
+    public:
 
     struct Node {
         unordered_map<char, Node*> children;
@@ -24,12 +27,18 @@ class StatTrie {
         }
     };
 
+    private:
+
     Node root;
     double anomalyRate;  // The occurence rate of one word below this rate => anomaly
     count_t countNodes; // Total number of Nodes currently in Trie
     count_t countUniqueWords;   // Total number of unique words currently stored in Trie
     count_t countInsertedChar;  // Total number of characters inserted to Trie (increased by inserting word's size for each insertion)
     count_t countInsertedWords; // Total number of words inserted to Trie (including duplications)
+
+    void _traverse (function<void(const Node*, const string&)> &callback, const Node* currNode, string &prefix) const;
+
+    friend class Analysis;
 
     public:
 
@@ -48,13 +57,10 @@ class StatTrie {
     count_t totalUniqueWords() const;
 
     void setAnomalyRate (double rate);
-    double getAnomalyRate ();
-    void printTrie() const;
-
-private:
-void printNode(const Node* node, string prefix) const;
-
+    double getAnomalyRate () const;
     
+    void traverse (function<void(const Node*, const string&)> callback) const;
+
 };
 
 
