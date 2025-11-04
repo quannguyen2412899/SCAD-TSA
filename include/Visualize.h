@@ -11,12 +11,9 @@ using namespace std;
 
 class Visualizer {
 
-    private:
-
     public:
-
     static void exportJSON (const StatTrie &trie);
-    
+
 };
 
 #endif

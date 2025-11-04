@@ -1,14 +1,23 @@
 #include "Visualize.h"
 #include <iostream>
 
+
+// count_t Visualizer::count = 0;
+// unordered_map<Node*, count_t> Visualizer::ID;
+
+
 void Visualizer::exportJSON (const StatTrie &trie) {
 
     const string exportPath = "data/trie.json";
     ofstream file (exportPath, ios::trunc);
-    json jData;
+    json jData, jRoot, jLabels;
+    count_t id = 0;
 
-    auto collector = [&jData] (const Node* node, const string &prefix) {
-        json* j = &jData;
+    auto collector = [&jRoot, &jLabels, &id] (const Node* node, const string &prefix) {
+
+        if (prefix.empty()) jLabels[0] = "";
+        else jLabels[id] = string(1, prefix.back());
+        json* j = &jRoot;
         for (char c : prefix) j = &((*j)["children"][string(1, c)]);
 
         (*j)["children"] = json::object();
@@ -17,26 +26,36 @@ void Visualizer::exportJSON (const StatTrie &trie) {
         }
         (*j)["count"] = node->count;
         (*j)["isEnd"] = node->isEnd;
+        (*j)["ID"] = id++;
+
     };
 
     trie.traverse(collector);
+    jData["root"] = jRoot;
+    jData["labels"] = jLabels;
+    jData["totalUnique"] = trie.totalUniqueWords();
+    jData["threshold"] = trie.getAnomalyRate();
+    
     file << jData.dump(4);
 }
 
-// int main() {
+int main() {
 
-//     StatTrie trie;
+    StatTrie trie;
     
-//     ifstream file ("data/text01");
-//     cout << file.is_open();
-//     string word;
-//     while (getline(file, word, ' ')) {
-//         cout << word << ' ';
-//         trie.insert (word);
-//     }
+    ifstream file ("data/text01");
+    // cout << file.is_open();
+    string word;
+    while (getline(file, word, ' ')) {
+        trie.insert (word);
+    }
 
-//     cout << trie.totalUniqueWords();
-//     Visualizer::exportJSON(trie);
+    // trie.insert("car");
+    // trie.insert("cat");
+    
 
-//     return 0;
-// }
+    // cout << endl << trie.totalUniqueWords() << trie.totalNodes();
+    Visualizer::exportJSON(trie);
+
+    return 0;
+}

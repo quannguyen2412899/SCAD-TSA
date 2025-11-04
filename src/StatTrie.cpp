@@ -133,7 +133,7 @@ void StatTrie::setAnomalyRate (double rate) {
     if (rate <= 1 && rate > 0) anomalyRate = rate;
 }
 
-double StatTrie::getAnomalyRate() {
+double StatTrie::getAnomalyRate() const {
     return anomalyRate;
 }
 

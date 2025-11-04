@@ -53,7 +53,7 @@ class StatTrie {
     count_t totalUniqueWords() const;
 
     void setAnomalyRate (double rate);
-    double getAnomalyRate ();
+    double getAnomalyRate () const;
     
     void traverse (function<void(const Node*, const string&)> callback) const;
 
