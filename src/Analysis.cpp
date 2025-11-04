@@ -78,7 +78,7 @@ vector<string> Analysis::detectAnomalies() const {
             bool sparse = node->children.size() < avgBranch / 2.0;
             bool shallow = prefix.size() < avgDepth * 0.5;
 
-            /*if (rare || deep || sparse)*/   if(deep)
+            /*if (rare || deep || sparse)*/   if(rare)
                 anomalies.push_back(prefix);
         }
     });
