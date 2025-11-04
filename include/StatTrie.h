@@ -10,6 +10,8 @@ typedef unsigned int count_t;
 
 using namespace std;
 
+class Analysis;
+
 class StatTrie {
 
     public:

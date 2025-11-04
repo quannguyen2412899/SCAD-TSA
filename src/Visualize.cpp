@@ -39,23 +39,23 @@ void Visualizer::exportJSON (const StatTrie &trie) {
     file << jData.dump(4);
 }
 
-int main() {
+// int main() {
 
-    StatTrie trie;
+//     StatTrie trie;
     
-    ifstream file ("data/text01");
-    // cout << file.is_open();
-    string word;
-    while (getline(file, word, ' ')) {
-        trie.insert (word);
-    }
+//     ifstream file ("data/text01");
+//     // cout << file.is_open();
+//     string word;
+//     while (getline(file, word, ' ')) {
+//         trie.insert (word);
+//     }
 
-    // trie.insert("car");
-    // trie.insert("cat");
+//     // trie.insert("car");
+//     // trie.insert("cat");
     
 
-    // cout << endl << trie.totalUniqueWords() << trie.totalNodes();
-    Visualizer::exportJSON(trie);
+//     // cout << endl << trie.totalUniqueWords() << trie.totalNodes();
+//     Visualizer::exportJSON(trie);
 
-    return 0;
-}
+//     return 0;
+// }

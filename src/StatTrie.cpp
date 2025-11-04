@@ -26,11 +26,6 @@ void StatTrie::_traverse (function<void(const Node*, const string&)> &callback, 
 /* ---------- BASIC METHODS ---------- */
 
 void StatTrie::insert (string word) {
-    /*
-    Propose:
-    Use root.count to count number of words inserted instead of countInsertedWords
-    Edge case: if (word.size() == 0) return;
-    */
     if (word.size() == 0) return;
     Node* ptr = &root;
     for (char c : word) {
