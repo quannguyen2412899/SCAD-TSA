@@ -8,14 +8,14 @@
 using namespace std;
 
 int main() {
-    string filepath = "data/Mac_2k.log";
+    string filepath = "data/text02.txt";
     
     cout << "=== Test ===" << endl;
 
     Preprocessor prep(filepath, false, false); 
-    prep.setIgnoredCharacters(",;:[](){}<>\"'=-");
-    prep.setDelimiters(".!?"); 
-    prep.run(DataType::LOG);
+    prep.setIgnoredCharacters(",;:[](){}<>\"'=-\r");
+    prep.setDelimiters(".!? "); 
+    prep.run(DataType::TEXT);
 
     const vector<string>& data = prep.getProcessedData();
     cout << "Total processed entries: " << data.size() << endl;
