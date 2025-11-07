@@ -10,7 +10,8 @@
 #include <iostream>
 #include <iomanip>
 #include <queue>
-
+#include <nlohmann/json.hpp>
+using json = nlohmann::json;
 using namespace std;
 
 /**
@@ -40,6 +41,8 @@ public:
 
     // ===== Reporting =====
     void generateReport(const string& filename = "analysis_report.txt") const;
+    
+    void exportJSON(const string exportPath = "data/trie.json");
 };
 
 #endif

@@ -117,3 +117,36 @@ void Analysis::generateReport(const string& filename) const {
     fout.close();
     cout << "[INFO] Analysis report saved to " << filename << endl;
 }
+
+/* ===================== Export JSON of trie ===================== */
+void Analysis::exportJSON (const string exportPath) {
+
+    ofstream file (exportPath, ios::trunc);
+    json jData, jRoot, jLabels;
+    count_t id = 0;
+
+    auto collector = [&jRoot, &jLabels, &id] (const StatTrie::Node* node, const string &prefix) {
+
+        if (prefix.empty()) jLabels[0] = "";
+        else jLabels[id] = string(1, prefix.back());
+        json* j = &jRoot;
+        for (char c : prefix) j = &((*j)["children"][string(1, c)]);
+
+        (*j)["children"] = json::object();
+        for (const pair<const char, StatTrie::Node*> p : node->children) {
+            (*j)["children"][string(1, p.first)] = json::object();
+        }
+        (*j)["count"] = node->count;
+        (*j)["isEnd"] = node->isEnd;
+        (*j)["ID"] = id++;
+
+    };
+
+    trie.traverse(collector);
+    jData["root"] = jRoot;
+    jData["labels"] = jLabels;
+    jData["totalUnique"] = trie.totalUniqueWords();
+    jData["threshold"] = trie.getAnomalyRate();
+    
+    file << jData.dump(2);
+}
