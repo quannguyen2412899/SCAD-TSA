@@ -2,20 +2,16 @@
 #include <iostream>
 
 
-// count_t Visualizer::count = 0;
-// unordered_map<Node*, count_t> Visualizer::ID;
-
-
 void Visualizer::exportJSON (const StatTrie &trie) {
 
-    const string exportPath = "data/trie.json";
+    const string exportPath = "data/interim/trie.json";
     ofstream file (exportPath, ios::trunc);
     json jData, jRoot, jLabels;
     count_t id = 0;
 
     auto collector = [&jRoot, &jLabels, &id] (const Node* node, const string &prefix) {
 
-        if (prefix.empty()) jLabels[0] = "";
+        if (prefix.empty()) jLabels[0] = "root";
         else jLabels[id] = string(1, prefix.back());
         json* j = &jRoot;
         for (char c : prefix) j = &((*j)["children"][string(1, c)]);
@@ -41,21 +37,14 @@ void Visualizer::exportJSON (const StatTrie &trie) {
 
 int main() {
 
-    StatTrie trie;
-    
-    ifstream file ("data/text01");
-    // cout << file.is_open();
+    StatTrie trie(0.007);
+    ifstream file ("data/input/text01.txt");
     string word;
-    while (getline(file, word, ' ')) {
+    while (getline (file, word, ' ')) {
         trie.insert (word);
     }
-
-    // trie.insert("car");
-    // trie.insert("cat");
-    
-
-    // cout << endl << trie.totalUniqueWords() << trie.totalNodes();
     Visualizer::exportJSON(trie);
+
 
     return 0;
 }
