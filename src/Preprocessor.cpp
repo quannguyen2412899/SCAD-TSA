@@ -99,7 +99,7 @@ void Preprocessor::run(const string file_in, const string file_out) {
     else {
         while (getline(fin, line)) {
             line = cleanLine(line);
-            fout << line;
+            fout << line << '\n';
         }
     }
 
