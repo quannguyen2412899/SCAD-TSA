@@ -93,9 +93,14 @@ void Preprocessor::run(const string file_in, const string file_out) {
     }
 
     string line;
-    while (getline(fin, line)) {
-        line = cleanLine(line);
-        fout << line;
+    if (chunking) {
+        // chunking ??
+    }
+    else {
+        while (getline(fin, line)) {
+            line = cleanLine(line);
+            fout << line;
+        }
     }
 
     cout << "Cleaned data is written to: " << file_out << endl;

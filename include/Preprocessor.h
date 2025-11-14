@@ -38,7 +38,7 @@ private:
     // string filename;
     unordered_set<char> ignoredChars;
     unordered_set<char> delimiters;
-    vector<string> processedData;
+    // vector<string> processedData;
 
     // static string cleanLine(const string& line, bool toLower, const unordered_set<char>& ignored);
     string cleanLine(const string& line) const;
@@ -65,7 +65,7 @@ public:
     static string toString(DataType t);
 
     // Getter
-    const vector<string>& getProcessedData() const { return processedData; }
+    // const vector<string>& getProcessedData() const { return processedData; }
     size_t getChunkSize() const { return chunkSize; }
     bool isChunking() const { return chunking; }
 };
