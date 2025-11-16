@@ -19,34 +19,31 @@ struct AnomalyEntry {
     double entropy;
     unsigned depth;
     double score; // tổng hợp multi-metric
+    bool isWord;
 };
 
 class Analysis {
 public:
     Analysis(const StatTrie &trie) : trie(trie) {}
 
-    // main function: detect anomalies
-    // std::vector<AnomalyEntry> detectAnomalies(double freqPercentile = 5.0, 
-    //                                           double entropyPercentile = 5.0,
-    //                                           double lenPercentile = 5.0);
-
-    
-    void analyze(double freqPercentile, double entropyPercentile, double lenPercentile);
+    void analyze(double freqPercentile = 5, double entropyPercentile = 5, double lenPercentile = 5);
     vector<AnomalyEntry> detectAnomalies(char mode);
 
     // xuất report, json, csv
     void report(const string directory = "data/output");
     
-    void exportJSON(const string exportPath = "data/trie.json");
-    void exportCSV();
-    void exportAnomaliesToJSON(const string filePath) const;
-    void exportAnomaliesToCSV(const string filePath) const;
+    static string escapeCSV(const std::string& s);
+    static void exportJSON(const StatTrie& trie, const string exportFile = "data/output/trie.json");
+    void exportCSV(const string exportFile = "data/output/all_entries.csv");
+    void exportAnomaliesToJSON(const string exportFile) const;
+    void exportAnomaliesToCSV(const string exportFile) const;
 
     void printAnomalies(const std::vector<AnomalyEntry> &anomalies) ;
 
 private:
     const StatTrie &trie;
     std::vector<AnomalyEntry> allEntries;
+    vector<AnomalyEntry> anomalies;
 
     double freqThreshold = 0.0;
     double entropyThreshold = 0.0;
@@ -58,10 +55,6 @@ private:
     unsigned mostPopDepth = 0;
     
     unordered_map<unsigned, unsigned> lenFreq;
-
-    // traverse trie and collect info
-    // void traverseTrie() ;
-    // compute entropy of children
 
     double computeLocalEntropy(const StatTrie::Node* node);
     void computePercentileThresholds(double freqPercentile, double entropyPercentile, double lenPercentile);

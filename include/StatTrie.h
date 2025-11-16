@@ -25,6 +25,11 @@ class StatTrie {
         ~Node() {
             for (pair<const char, Node*> p : children) delete p.second;
         }
+        count_t countEnd() const {
+            count_t result = count;
+            for (const pair<const char, Node*> &p : children) result -= p.second->count;
+            return result;
+        }
     };
 
     private:
@@ -46,6 +51,7 @@ class StatTrie {
     // ~StatTrie();
     
     void insert (string word);
+    void insert (string word, count_t num);
     bool contains (string word) const;
     bool startWith (string prefix) const;
     void remove (string word);
@@ -60,6 +66,7 @@ class StatTrie {
     double getAnomalyRate () const;
     
     void traverse (function<void(const Node*, const string&)> callback) const;
+    void traverse (const string prefix, function<void(const Node*, const string&)> callback) const;
 
 };
 

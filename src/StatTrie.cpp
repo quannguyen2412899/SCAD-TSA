@@ -45,6 +45,26 @@ void StatTrie::insert (string word) {
     }
 }
 
+void StatTrie::insert (string word, count_t num) {
+    if (word.size() == 0) return;
+    Node* ptr = &root;
+    for (char c : word) {
+        if (!ptr->children.count(c)) {
+            ptr->children[c] = new Node;
+            ++countNodes;
+        }
+        ptr = ptr->children[c];
+        ptr->count += num;
+    }
+
+    countInsertedChar += word.size() * num;
+    countInsertedWords += num;
+    if (!ptr->isEnd) {
+        ptr->isEnd = true;
+        ++countUniqueWords;
+    }
+}
+
 bool StatTrie::contains (string word) const {
     const Node* ptr = &root;
     for (char c : word) {
@@ -135,4 +155,13 @@ double StatTrie::getAnomalyRate() const{
 void StatTrie::traverse (function<void(const Node*, const string&)> callback) const {
     string prefix;
     _traverse (callback, &root, prefix);
+}
+
+void StatTrie::traverse (const string prefix, function<void(const Node*, const string&)> callback) const {
+    const Node* ptr = &root;
+    callback(ptr, "");
+    for (char c : prefix) {
+        ptr = ptr->children.at(c);
+        callback (ptr, "");
+    }
 }
