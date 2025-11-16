@@ -1,13 +1,127 @@
 #include "../include/Analysis.h"
-
-/*
-how to use:
-Ananlys a(trie);
-a.analyze();
-a.report();
-*/
+using json = nlohmann::json;
 
 
+/* ==================== Constructor ==================== */
+
+Analysis::Analysis(const StatTrie &trie) : 
+    trie(trie),
+    freqThreshold(0), entropyThreshold(0), lenFreqThreshold(0),
+    maxFreq(0), minFreq(0),
+    maxEntropy(0), minEntropy(0),
+    maxDepth(0), minDepth(0),
+    mostPopLength(0), leastPopLength(0) {}
+
+    
+/* ==================== Helper: Compute entropy ==================== */
+
+double Analysis::computeLocalEntropy(const StatTrie::Node* node) {
+    // if (node->children.empty()) return 0.0;
+    double total = node->count;
+
+    double H = 0.0;
+    for (auto &p : node->children) {
+        double p_i = p.second->count / total;
+        H -= p_i * log2(p_i);
+    }
+    double p_end = node->countEnd() / total;
+    if (node->isEnd) H -= p_end * log2(p_end);
+
+    return H;
+}
+
+
+/* ==================== Traverse Trie and collect statistics ==================== */
+
+void Analysis::collectStatistics(double freqPercentile, double entropyPercentile, double lenPercentile) {
+    allEntries.clear();
+    
+    auto callback = [&](const StatTrie::Node* node, const std::string &word){
+        double localEntropy = computeLocalEntropy(node);
+
+        if (localEntropy > 0) {
+            AnomalyEntry entry;
+            entry.isWord = false;
+            entry.word = word;
+            entry.count = node->count;
+            entry.freqRate = (double)entry.count / trie.totalInsertedWords();
+            entry.depth = word.size();
+            entry.entropy = localEntropy;
+
+            allEntries.push_back(entry);
+
+            if (entry.entropy > maxEntropy) maxEntropy = entry.entropy;
+        }
+
+        if (node->isEnd) {
+            AnomalyEntry entry;
+            entry.isWord = true;
+            entry.word = word;
+            entry.count = node->countEnd();
+            entry.freqRate = (double)entry.count / trie.totalInsertedWords();
+            entry.depth = word.size();
+            entry.entropy = localEntropy;
+
+            allEntries.push_back(entry);
+
+            if (lenFreq.count(entry.depth)) lenFreq[entry.depth] += 1;
+            else lenFreq[entry.depth] = 1;
+
+            if (entry.count > maxFreq) maxFreq = entry.count;
+            if (entry.count < minFreq) minFreq = entry.count;
+            if (entry.entropy > maxEntropy) maxEntropy = entry.entropy;
+            if (entry.entropy < minEntropy) minEntropy = entry.entropy;
+            if (entry.depth > maxDepth) maxDepth = entry.depth;
+            if (entry.depth < minDepth) minDepth = entry.depth;
+        }
+    };
+    trie.traverse(callback);
+
+    // Compute thresholds based on percentile
+    computePercentileThresholds(freqPercentile, entropyPercentile, lenPercentile);
+}
+
+
+void Analysis::computePercentileThresholds(double freqPercentile, double entropyPercentile, double lenPercentile) {
+
+    std::vector<unsigned> freqs;
+    std::vector<double> entropies;
+    std::vector<pair<unsigned, unsigned>> lenFreqs;
+
+    for (pair<const unsigned, unsigned> &p : lenFreq) 
+        lenFreqs.push_back(pair<unsigned, unsigned> (p.first, p.second));
+    
+    for (auto &e : allEntries) {
+        if (e.isWord) freqs.push_back(e.count);
+        if (!e.isWord) entropies.push_back(e.entropy);
+    }
+
+    std::sort(freqs.begin(), freqs.end());
+    std::sort(entropies.begin(), entropies.end());
+    std::sort(lenFreqs.begin(), lenFreqs.end(), [] (pair<unsigned, unsigned> &a, pair<unsigned, unsigned> &b) {
+        return a.second < b.second;
+    });
+
+    mostPopLength = lenFreqs.front().first;
+    leastPopLength = lenFreqs.back().first;
+    
+    size_t fIdx = (size_t)((freqPercentile/100.0) * freqs.size());
+    size_t eIdx = (size_t)((entropyPercentile/100.0) * entropies.size());
+    size_t lIdx = 0;
+    for (size_t count = lenFreqs[0].second; count < (lenPercentile/100.0) * trie.totalInsertedWords(); count += lenFreqs[++lIdx].second);
+
+    if (fIdx >= freqs.size()) fIdx = freqs.size() - 1;
+    if (eIdx >= entropies.size()) eIdx = entropies.size() - 1;
+    if (lIdx >= lenFreqs.size()) lIdx = lenFreqs.size() - 1;
+
+    freqThreshold = freqs[fIdx];
+    entropyThreshold = entropies[eIdx];
+    lenFreqThreshold = lenFreqs[lIdx].second;
+}
+
+
+
+/* ==================== Export report, csv and json ====================*/
 
 void Analysis::report(const string directory) {
 
@@ -36,55 +150,7 @@ void Analysis::report(const string directory) {
 }
 
 
-
-
-void Analysis::analyze(double freqPercentile, double entropyPercentile, double lenPercentile) {
-    allEntries.clear();
-    
-    auto callback = [&](const StatTrie::Node* node, const std::string &word){
-        double localEntropy = computeLocalEntropy(node);
-
-        if (localEntropy > 0) {
-            AnomalyEntry entry;
-            entry.isWord = false;
-            entry.word = word;
-            entry.count = node->count;
-            entry.freqRate = (double)node->count / trie.totalInsertedWords();
-            entry.depth = word.size();
-            entry.entropy = localEntropy;
-
-            allEntries.push_back(entry);
-
-            if (entry.entropy > maxEntropy) maxEntropy = entry.entropy;
-        }
-
-        if (node->isEnd) {
-            AnomalyEntry entry;
-            entry.isWord = true;
-            entry.word = word;
-            entry.count = node->countEnd();
-            entry.freqRate = (double)entry.count / trie.totalInsertedWords();
-            entry.depth = word.size();
-            entry.entropy = localEntropy;
-
-            allEntries.push_back(entry);
-
-            if (lenFreq.count(entry.depth)) lenFreq[entry.depth] += 1;
-            else lenFreq[entry.depth] = 1;
-
-            if (entry.freqRate > maxFreqRate) maxFreqRate = entry.freqRate;
-            if (entry.entropy > maxEntropy) maxEntropy = entry.entropy;
-            if (entry.depth > maxDepth) maxDepth = entry.depth;
-        }
-    };
-    trie.traverse(callback);
-
-    // Compute thresholds based on percentile
-    computePercentileThresholds(freqPercentile, entropyPercentile, lenPercentile);
-}
-
-
-
+/* ==================== Detect anomalies by frequency/length/entropy ==================== */
 
 vector<AnomalyEntry> Analysis::detectAnomalies(char mode) {
     
@@ -93,7 +159,7 @@ vector<AnomalyEntry> Analysis::detectAnomalies(char mode) {
     if (mode == 'f') {
         for (auto &entry : allEntries) {
             if (!entry.isWord) continue;
-            entry.score = entry.freqRate;
+            entry.score = entry.count;
             if (entry.score <= freqThreshold) anomalies.push_back(entry);
         }
     }
@@ -126,76 +192,24 @@ vector<AnomalyEntry> Analysis::detectAnomalies(char mode) {
 
 
 
+/* ==================== Print anomalies to screen ==================== */
 
-
-void Analysis::computePercentileThresholds(double freqPercentile, double entropyPercentile, double lenPercentile) {
-    // frequency threshold
-    std::vector<double> freqRates;
-    std::vector<double> entropies;
-    std::vector<pair<unsigned, unsigned>> lenFreqs;
-
-    size_t s = lenFreq.size();
-    for (pair<const unsigned, unsigned> &p : lenFreq) 
-        lenFreqs.push_back(pair<unsigned, unsigned> (p.first, p.second));
-    
-    for (auto &e : allEntries) {
-        if (e.isWord) freqRates.push_back(e.freqRate);
-        if (!e.isWord) entropies.push_back(e.entropy);
-    }
-
-    std::sort(freqRates.begin(), freqRates.end());
-    std::sort(entropies.begin(), entropies.end());
-    std::sort(lenFreqs.begin(), lenFreqs.end(), [] (pair<unsigned, unsigned> &a, pair<unsigned, unsigned> &b) {
-        return a.second < b.second;
-    });
-    
-    size_t fIdx = (size_t)((freqPercentile/100.0) * freqRates.size());
-    size_t eIdx = (size_t)((entropyPercentile/100.0) * entropies.size());
-    size_t lIdx = 0;
-    for (size_t count = lenFreqs[0].second; count < (lenPercentile/100.0) * trie.totalInsertedWords(); count += lenFreqs[++lIdx].second);
-
-    if (fIdx >= freqRates.size()) fIdx = freqRates.size() - 1;
-    if (eIdx >= entropies.size()) eIdx = entropies.size() - 1;
-    if (lIdx >= lenFreqs.size()) lIdx = lenFreqs.size() - 1;
-
-    freqThreshold = freqRates[fIdx];
-    entropyThreshold = entropies[eIdx];
-    lenFreqThreshold = lenFreqs[lIdx].second;
-}
-
-
-
-
-double Analysis::computeLocalEntropy(const StatTrie::Node* node) {
-    if (node->children.empty()) return 0.0;
-    double total = 0.0;
-    for (auto &p : node->children) total += p.second->count;
-    double H = 0.0;
-    for (auto &p : node->children) {
-        double p_i = p.second->count / total;
-        H -= p_i * log2(p_i);
-    }
-    return H;
-}
-
-
-
-
-void Analysis::printAnomalies(const vector<AnomalyEntry> &anomalies){
-    std::cout << "Word\tCount\tFreqRate\tEntropy\tDepth\tScore\n";
+void Analysis::printAnomalies(const vector<AnomalyEntry> &anomalies) const {
+    // std::cout << "Word\tCount\tFreqRate\tEntropy\tDepth\tScore\n";
+    std::cout << "String\tCount\tFreqRate\tEntropy\tDepth\n";
     std::cout << "---------------------------------------------------------------\n";
     for (auto &a : anomalies) {
         std::cout << a.word << "\t"
                     << a.count << "\t"
                     << std::fixed << std::setprecision(5) << a.freqRate << "\t"
                     << a.entropy << "\t"
-                    << a.depth << "\t"
-                    << a.score << "\n";
+                    << a.depth << "\n";
+                    // << a.score << "\n";
     }
 }
 
 
-
+/* ==================== Export to json ==================== */
 
 void Analysis::exportJSON (const StatTrie &trie, const string exportFile) {
 
@@ -237,12 +251,14 @@ void Analysis::exportAnomaliesToJSON(const string exportFile) const {
 }
 
 
+/* ==================== Export to csv ==================== */
+
 void Analysis::exportAnomaliesToCSV(const string exportFile) const {
     ofstream fout(exportFile, ios::trunc);
     fout << "String,Frequency,Length,Entropy,Rate,Status\n";
     for (const AnomalyEntry& entry : anomalies) {
         string status = "anomaly";
-        if (entry.freqRate <= freqThreshold) status += "-fequency";
+        if (entry.count <= freqThreshold) status += "-fequency";
         if (entry.isWord && lenFreq.at(entry.depth) <= lenFreqThreshold) status += "-length";
         if (!entry.isWord && entry.entropy <= entropyThreshold) status += "-entropy";
 
@@ -257,13 +273,13 @@ void Analysis::exportAnomaliesToCSV(const string exportFile) const {
 
 
 
-void Analysis::exportCSV(const string exportFile) {
+void Analysis::exportCSV(const string exportFile) const {
     ofstream fout(exportFile, ios::trunc);
     fout << "String,Frequency,Length,Entropy,Rate,Status\n";
-    for (AnomalyEntry& entry : allEntries) {
+    for (const AnomalyEntry& entry : allEntries) {
         string status="";
-        if (entry.freqRate <= freqThreshold) status += "-fequency";
-        if (entry.isWord && lenFreq[entry.depth] <= lenFreqThreshold) status += "-length";
+        if (entry.count <= freqThreshold) status += "-fequency";
+        if (entry.isWord && lenFreq.at(entry.depth) <= lenFreqThreshold) status += "-length";
         if (!entry.isWord && entry.entropy <= entropyThreshold) status += "-entropy";
 
         if(status.empty()) status = "normal";
@@ -279,7 +295,9 @@ void Analysis::exportCSV(const string exportFile) {
 }
 
 
-string Analysis::escapeCSV(const std::string& s) {
+/* ==================== Helper: format string to put in csv ==================== */
+
+string Analysis::escapeCSV(const std::string& s) const {
     bool needQuotes = s.find(',') != std::string::npos ||
                       s.find('"') != std::string::npos ||
                       s.find('\n') != std::string::npos;
