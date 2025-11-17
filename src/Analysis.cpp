@@ -78,11 +78,12 @@ void Analysis::collectStatistics(const StatTrie* _trie) {
     trie->traverse(callback);
 
     sort(allEntries.begin(), allEntries.end(), [](AnomalyEntry& a, AnomalyEntry& b) {
+        if (a.word.compare(b.word) == 0) return !a.isWord && b.isWord;
         return a.word.compare(b.word) < 0;
     });
 
     getExtremum();
-    computePercentileThresholds(freqPercentile, entropyPercentile, lenPercentile);
+    computePercentileThresholds();
     detectAnomalies();
 }
 
@@ -109,7 +110,7 @@ void Analysis::getExtremum() {
 }
 
 
-void Analysis::computePercentileThresholds(double freqPercentile, double entropyPercentile, double lenPercentile) {
+void Analysis::computePercentileThresholds() {
 
     std::vector<unsigned> freqs;
     std::vector<double> entropies;
@@ -190,9 +191,9 @@ void Analysis::detectAnomalies() {
                 lenAnomaliesRate += entry.freqRate;
             }
         }
-        else if (entry.entropy <= entropyThreshold) {
+        else if (entry.entropy >= entropyThreshold) {
             entropyAnomalies.push_back(entry);
-            entropyAnomalies.back().score = entry.entropy;
+            entropyAnomalies.back().score = -entry.entropy;
             entropyAnomaliesRate += entry.freqRate;
         }
     }
@@ -408,28 +409,28 @@ void Analysis::exportReport(const string exportFile) const {
 
     size_t n = freqAnomalies.size() > 8 ? 8 : freqAnomalies.size();
     for (size_t i = 0; i < n; ++i) 
-        file << freqAnomalies[i].word << ", " << "frequency = " << freqAnomalies[i].count << '\n';
-    if (n < freqAnomalies.size()) file << "...";
-    file << "\n\nThere are " << freqAnomalies.size() << " frequency-based anomalies\n"
+        file << freqAnomalies[i].word << ", frequency = " << freqAnomalies[i].count << '\n';
+    if (n < freqAnomalies.size()) file << "...\n";
+    file << "\nThere are " << freqAnomalies.size() << " frequency-based anomalies\n"
          << "Accounted for " << freqAnomaliesRate*100 << "% of the processed text"
     
          << "\n\n------------------ Anomalies: length-frequency-based -------------------\n\n";
 
     n = lenAnomalies.size() > 8 ? 8 : lenAnomalies.size();
     for (size_t i = 0; i < n; ++i) 
-        file << lenAnomalies[i].word << ", " << "length = " << lenAnomalies[i].depth
-             << ", length frequency = " << lenFreq.at(lenAnomalies[i].depth) << '\n';
-    if (n < lenAnomalies.size()) file << "...";
-    file << "\n\nThere are " << lenAnomalies.size() << " frequency-based anomalies\n"
+        file << lenAnomalies[i].word << ", length = " << lenAnomalies[i].depth
+             << ", length frequency = " << lenFreq.at(lenAnomalies[i].depth) << ", frequency = " << lenAnomalies[i].count << '\n';
+    if (n < lenAnomalies.size()) file << "...\n";
+    file << "\nThere are " << lenAnomalies.size() << " length-frequency-based anomalies\n"
          << "Accounted for " << lenAnomaliesRate*100 << "% of the processed text"
 
          << "\n\n------------------ Anomalies: entropy-based -------------------\n\n";
 
     n = entropyAnomalies.size() > 8 ? 8 : entropyAnomalies.size();
     for (size_t i = 0; i < n; ++i) 
-        file << entropyAnomalies[i].word << ", " << "entropy = " << entropyAnomalies[i].entropy << '\n';
-    if (n < entropyAnomalies.size()) file << "...";
-    file << "\n\nThere are " << entropyAnomalies.size() << " frequency-based anomalies\n"
+        file << entropyAnomalies[i].word << ", entropy = " << entropyAnomalies[i].entropy << ", frequency =" << entropyAnomalies[i].count << '\n';
+    if (n < entropyAnomalies.size()) file << "...\n";
+    file << "\nThere are " << entropyAnomalies.size() << " entropy-based anomalies\n"
          << "Accounted for " << entropyAnomaliesRate*100 << "% of the processed text"
 
          << "\n\n======================= END OF REPORT =============================";

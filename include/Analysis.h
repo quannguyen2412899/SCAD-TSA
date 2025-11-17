@@ -36,7 +36,7 @@ class Analysis {
 private:
 
     const StatTrie* trie;
-    unordered_set<const StatTrie::Node*, bool> isAnomaly;
+    unordered_set<const StatTrie::Node*> isAnomaly;
     std::vector<AnomalyEntry> allEntries;
     vector<AnomalyEntry> freqAnomalies;
     vector<AnomalyEntry> lenAnomalies;
@@ -68,7 +68,7 @@ private:
     double entropyAnomaliesRate;
     
     double computeLocalEntropy(const StatTrie::Node* node);
-    void computePercentileThresholds(double freqPercentile, double entropyPercentile, double lenPercentile);
+    void computePercentileThresholds();
     void getExtremum();
     void detectAnomalies();
 
@@ -79,7 +79,7 @@ private:
 
     public:
 
-    Analysis(double freqPercentile = 5, double entropyPercentile = 5, double lenPercentile = 5);
+    Analysis(double freqPercentile = 5, double lenPercentile = 95, double entropyPercentile = 5);
 
     void collectStatistics(const StatTrie* _trie);
 
