@@ -56,8 +56,6 @@ void Analysis::collectStatistics() {
             entry.entropy = localEntropy;
 
             allEntries.push_back(entry);
-
-            if (entry.entropy > maxEntropy) maxEntropy = entry.entropy;
         }
         if (node->isEnd) {
             AnomalyEntry entry;
@@ -73,10 +71,7 @@ void Analysis::collectStatistics() {
             if (lenFreq.count(entry.depth)) lenFreq[entry.depth] += 1;
             else lenFreq[entry.depth] = 1;
 
-            if (entry.count > maxFreq) maxFreq = entry.count;
-            if (entry.entropy > maxEntropy) maxEntropy = entry.entropy;
-            if (entry.depth > maxDepth) maxDepth = entry.depth;
-            if (entry.depth < minDepth) minDepth = entry.depth;
+            totalUniqueWordChar += entry.depth;
         }
     };
     trie.traverse(callback);
@@ -85,21 +80,31 @@ void Analysis::collectStatistics() {
         return a.word.compare(b.word) < 0;
     });
 
-    minFreq = maxFreq;
-    minEntropy = maxEntropy;
-    minDepth = maxDepth;
+    getExtremum();
+    computePercentileThresholds(freqPercentile, entropyPercentile, lenPercentile);
+    detectAnomalies();
+}
+
+void Analysis::getExtremum() {
+
     for (AnomalyEntry &e : allEntries) {
+        if (e.isWord) {
+            if (e.count > maxFreq) maxFreq = e.count;
+            if (e.depth > maxDepth) maxDepth = e.depth;
+        }
+        if (e.entropy > maxEntropy) maxEntropy = e.entropy;
+    }
+
+    minFreq = maxFreq;
+    minDepth = maxDepth;
+    minEntropy = maxEntropy;
+    for (AnomalyEntry &e : allEntries) {    
         if (e.isWord) {
             if (e.count < minFreq) minFreq = e.count;
             if (e.depth < minDepth) minDepth = e.depth;
-            totalUniqueWordChar += e.depth;
         }
         if (e.entropy < minEntropy) minEntropy = e.entropy;
     }
-
-    computePercentileThresholds(freqPercentile, entropyPercentile, lenPercentile);
-
-    detectAnomalies();
 }
 
 
@@ -123,8 +128,8 @@ void Analysis::computePercentileThresholds(double freqPercentile, double entropy
         return a.second < b.second;
     });
 
-    mostPopLength = lenFreqs.front().first;
-    leastPopLength = lenFreqs.back().first;
+    // mostPopLength = lenFreqs.front().first;
+    // leastPopLength = lenFreqs.back().first;
     
     size_t fIdx = (size_t)((freqPercentile/100.0) * freqs.size());
     size_t eIdx = (size_t)((entropyPercentile/100.0) * entropies.size());
@@ -146,11 +151,16 @@ void Analysis::computePercentileThresholds(double freqPercentile, double entropy
 
 void Analysis::report(const string directory) {
 
+    cout << "All outputs are stored in " << directory << endl;
+
     exportAnomaliesToCSV(directory);
     exportAnomaliesToJSON(directory);
-    // Nếu > 50 node thì không xuất json toàn bộ cây trie
+
     if (trie.totalNodes() <= 256) exportJSON(directory+"/trie.json");
-    else cout << "trie too big" << endl;
+    else {
+        cout << "The whole trie is too big, not exporting it to json." << endl;
+    }
+
     // xuất csv cho toàn bộ cây trie
     exportCSV(directory+"/all_entries.csv");
     exportReport(directory+"/overall_report.txt");
@@ -280,14 +290,15 @@ void Analysis::exportAnomaliesToJSON(const string directory) const {
 
 // Helper: write csv content to file stream
 void Analysis::writeToFilestream (ofstream& file, const vector<AnomalyEntry>& anomalies)  const{
-    file << "String,Frequency,Length,Entropy,Rate,Status\n";
+    file << "String,Kind,Frequency,Length,Entropy,Rate,Anomaly\n";
     for (const AnomalyEntry& entry : anomalies) {
-        string status = "anomaly";
-        if (entry.count <= freqThreshold) status += "-fequency";
-        if (entry.isWord && lenFreq.at(entry.depth) <= lenFreqThreshold) status += "-length";
-        if (!entry.isWord && entry.entropy <= entropyThreshold) status += "-entropy";
-
+        string status;
+        if (entry.count <= freqThreshold) status += "frequency/";
+        if (entry.isWord && lenFreq.at(entry.depth) <= lenFreqThreshold) status += "length/";
+        if (!entry.isWord && entry.entropy <= entropyThreshold) status += "entropy/";
+        if (!status.empty()) status.pop_back();
         file << escapeCSV(entry.word) << ','
+             << (entry.isWord ? "word" : "prefix") << ','
              << entry.count << ',' 
              << entry.depth << ',' 
              << entry.entropy << ','
@@ -312,7 +323,7 @@ void Analysis::exportAnomaliesToCSV(const string directory) const {
     writeToFilestream(fout, lenAnomalies);
     fout.close();
 
-    fout.open(directory+"/rare_length.csv", ios::trunc);
+    fout.open(directory+"/rare_entropy.csv", ios::trunc);
     writeToFilestream(fout, entropyAnomalies);    
     fout.close();
 }
@@ -321,27 +332,11 @@ void Analysis::exportAnomaliesToCSV(const string directory) const {
 void Analysis::exportCSV(const string exportFile) const {
     ofstream fout(exportFile, ios::trunc);
     if (!fout.is_open()) {
-        cout << "Failed to export all-entries to csv file " << exportFile << endl;
+        cout << "Failed to export all entries to csv file " << exportFile << endl;
         return;
     }
 
-    fout << "String,Frequency,Length,Entropy,Rate,Status\n";
-    for (const AnomalyEntry& entry : allEntries) {
-        string status="";
-        if (entry.count <= freqThreshold) status += "-fequency";
-        if (entry.isWord && lenFreq.at(entry.depth) <= lenFreqThreshold) status += "-length";
-        if (!entry.isWord && entry.entropy <= entropyThreshold) status += "-entropy";
-
-        if(status.empty()) status = "normal";
-        else status = "anomaly" + status;
-
-        fout << escapeCSV(entry.word) << ','
-             << entry.count << ',' 
-             << entry.depth << ',' 
-             << entry.entropy << ','
-             << entry.freqRate << ','
-             << status << '\n';
-    }
+    writeToFilestream(fout, allEntries);
 
     fout.close();
 }
@@ -387,24 +382,24 @@ void Analysis::exportReport(const string exportFile) const {
          << "- Total unique-word characters: " << totalUniqueWordChar << '\n'
          << "- Total nodes: " << totalNodes << '\n'
          << "- Compressed rate (total unique-word characters / total nodes): " << (double)totalUniqueWordChar/totalNodes << '\n'
-         << "\n-------------------------- Thresholds ----------------------------\n\n"
-         << "- Word frequency threshold (" << freqPercentile << "% lower percentile): " << freqThreshold << '\n'
-         << "- Length frequency threshold (" << lenPercentile << "% lower percentile): " << lenFreqThreshold << '\n'
-         << "- Entropy threshold (" << entropyPercentile << "% lower percentile): " << entropyThreshold << '\n'
          << "\n----------------------- Extremum statistics ------------------------\n\n"
          << "Word frequency:\n"
          << "- Max frequency: " << maxFreq << '\n'
          << "- Min frequency: " << minFreq << "\n\n"
          << "Word length (depth):\n"
          << "- Max length: " << maxDepth << '\n'
-         << "- Min length: " << minDepth << '\n'
-         << "- Most popular length: " << mostPopLength << '\n'
-         << "- Least popular length: " << leastPopLength << "\n\n"
+         << "- Min length: " << minDepth << "\n\n"
+        //  << "- Most popular length: " << mostPopLength << '\n'
+        //  << "- Least popular length: " << leastPopLength << "\n\n"
          << "Entropy (local node entropy):\n"
          << "- Max entropy: " << maxEntropy << '\n'
          << "- Min entropy: " << minEntropy << '\n'
 
          << "\n-------------------- ANOMALIES DETECTION --------------------"
+         << "\n\n-------------------------- Thresholds ----------------------------\n\n"
+         << "- Word frequency threshold (" << freqPercentile << "% lower percentile): " << freqThreshold << '\n'
+         << "- Length frequency threshold (" << lenPercentile << "% lower percentile): " << lenFreqThreshold << '\n'
+         << "- Entropy threshold (" << entropyPercentile << "% lower percentile): " << entropyThreshold
          
          << "\n\n-------------------- Anomalies: frequency-based --------------------\n\n";
 

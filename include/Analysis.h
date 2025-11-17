@@ -78,6 +78,7 @@ private:
     void computePercentileThresholds(double freqPercentile, double entropyPercentile, double lenPercentile);
     string escapeCSV(const std::string& s) const;
     void writeToFilestream (ofstream& file, const vector<AnomalyEntry>& anomalies) const;
+    void getExtremum();
 
     void detectAnomalies();
 
