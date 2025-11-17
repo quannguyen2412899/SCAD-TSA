@@ -69,6 +69,11 @@ private:
     unsigned leastPopLength;
     unordered_map<unsigned, unsigned> lenFreq;
 
+    double freqAnomaliesRate;
+    double lenAnomaliesRate;
+    double entropyAnomaliesRate;
+    
+
     double computeLocalEntropy(const StatTrie::Node* node);
     void computePercentileThresholds(double freqPercentile, double entropyPercentile, double lenPercentile);
     string escapeCSV(const std::string& s) const;

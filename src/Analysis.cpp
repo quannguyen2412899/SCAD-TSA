@@ -6,12 +6,14 @@ using json = nlohmann::json;
 
 Analysis::Analysis(const StatTrie &trie, double freqPercentile, double entropyPercentile, double lenPercentile) : 
     trie(trie),
+    freqPercentile(freqPercentile), entropyPercentile(entropyPercentile), lenPercentile(lenPercentile),
     freqThreshold(0), entropyThreshold(0), lenFreqThreshold(0),
     totalInsertedWords(0), totalUniqueWords(0), totalNodes(0), totalUniqueWordChar(0),
     maxFreq(0), minFreq(0),
     maxEntropy(0), minEntropy(0),
     maxDepth(0), minDepth(0),
-    mostPopLength(0), leastPopLength(0) {}
+    mostPopLength(0), leastPopLength(0),
+    freqAnomaliesRate(0), lenAnomaliesRate(0), entropyAnomaliesRate(0) {}
 
     
 /* ==================== Helper: Compute entropy ==================== */
@@ -35,19 +37,21 @@ double Analysis::computeLocalEntropy(const StatTrie::Node* node) {
 /* ==================== Traverse Trie and collect statistics ==================== */
 
 void Analysis::collectStatistics() {
+
+    totalInsertedWords = trie.totalInsertedWords();
+    totalUniqueWords = trie.totalUniqueWords();
+    totalNodes = trie.totalNodes();
+
     allEntries.clear();
     
     auto callback = [&](const StatTrie::Node* node, const std::string &word){
-
-        ++totalNodes;
         double localEntropy = computeLocalEntropy(node);
-
         if (localEntropy > 0) {
             AnomalyEntry entry;
             entry.isWord = false;
             entry.word = word;
             entry.count = node->count;
-            entry.freqRate = (double)entry.count / trie.totalInsertedWords();
+            entry.freqRate = (double)entry.count / totalInsertedWords;
             entry.depth = word.size();
             entry.entropy = localEntropy;
 
@@ -55,13 +59,12 @@ void Analysis::collectStatistics() {
 
             if (entry.entropy > maxEntropy) maxEntropy = entry.entropy;
         }
-
         if (node->isEnd) {
             AnomalyEntry entry;
             entry.isWord = true;
             entry.word = word;
             entry.count = node->countEnd();
-            entry.freqRate = (double)entry.count / trie.totalInsertedWords();
+            entry.freqRate = (double)entry.count / totalInsertedWords;
             entry.depth = word.size();
             entry.entropy = localEntropy;
 
@@ -71,23 +74,30 @@ void Analysis::collectStatistics() {
             else lenFreq[entry.depth] = 1;
 
             if (entry.count > maxFreq) maxFreq = entry.count;
-            if (entry.count < minFreq) minFreq = entry.count;
             if (entry.entropy > maxEntropy) maxEntropy = entry.entropy;
-            if (entry.entropy < minEntropy) minEntropy = entry.entropy;
             if (entry.depth > maxDepth) maxDepth = entry.depth;
             if (entry.depth < minDepth) minDepth = entry.depth;
         }
     };
     trie.traverse(callback);
 
-    // Compute thresholds based on percentile
-    computePercentileThresholds(freqPercentile, entropyPercentile, lenPercentile);
+    sort(allEntries.begin(), allEntries.end(), [](AnomalyEntry& a, AnomalyEntry& b) {
+        return a.word.compare(b.word) < 0;
+    });
 
-    for (AnomalyEntry& e : allEntries) {
-        totalInsertedWords += e.count;
-        totalUniqueWords++;
-        totalUniqueWordChar += e.depth;
+    minFreq = maxFreq;
+    minEntropy = maxEntropy;
+    minDepth = maxDepth;
+    for (AnomalyEntry &e : allEntries) {
+        if (e.isWord) {
+            if (e.count < minFreq) minFreq = e.count;
+            if (e.depth < minDepth) minDepth = e.depth;
+            totalUniqueWordChar += e.depth;
+        }
+        if (e.entropy < minEntropy) minEntropy = e.entropy;
     }
+
+    computePercentileThresholds(freqPercentile, entropyPercentile, lenPercentile);
 
     detectAnomalies();
 }
@@ -128,8 +138,6 @@ void Analysis::computePercentileThresholds(double freqPercentile, double entropy
     freqThreshold = freqs[fIdx];
     entropyThreshold = entropies[eIdx];
     lenFreqThreshold = lenFreqs[lIdx].second;
-
-    detectAnomalies();
 }
 
 
@@ -138,14 +146,14 @@ void Analysis::computePercentileThresholds(double freqPercentile, double entropy
 
 void Analysis::report(const string directory) {
 
-    exportAnomaliesToCSV();
-    exportAnomaliesToJSON();
+    exportAnomaliesToCSV(directory);
+    exportAnomaliesToJSON(directory);
     // Nếu > 50 node thì không xuất json toàn bộ cây trie
-    if (trie.totalNodes() <= 256) exportJSON(trie);
+    if (trie.totalNodes() <= 256) exportJSON(directory+"/trie.json");
     else cout << "trie too big" << endl;
     // xuất csv cho toàn bộ cây trie
-    exportCSV();
-
+    exportCSV(directory+"/all_entries.csv");
+    exportReport(directory+"/overall_report.txt");
 
 }
 
@@ -163,15 +171,18 @@ void Analysis::detectAnomalies() {
             if (entry.count <= freqThreshold) {
                 freqAnomalies.push_back(entry);
                 freqAnomalies.back().score = entry.count;
+                freqAnomaliesRate += entry.freqRate;
             }
             if (lenFreq[entry.depth] <= lenFreqThreshold) {
                 lenAnomalies.push_back(entry);
                 lenAnomalies.back().score = lenFreq[entry.depth];
+                lenAnomaliesRate += entry.freqRate;
             }
         }
         else if (entry.entropy <= entropyThreshold) {
             entropyAnomalies.push_back(entry);
             entropyAnomalies.back().score = entry.entropy;
+            entropyAnomaliesRate += entry.freqRate;
         }
     }
 
@@ -208,13 +219,17 @@ void Analysis::printAnomalies(const vector<AnomalyEntry> &anomalies) const {
 /* ==================== Export to json ==================== */
 
 void Analysis::exportJSON(const string exportFile) {
-    exportJSON(trie);
+    exportJSON(trie, exportFile);
 }
 
 
 void Analysis::exportJSON (const StatTrie &trie, const string exportFile) {
 
     ofstream file (exportFile, ios::trunc);
+    if (!file.is_open()) {
+        cout << "Failed to open " << exportFile << "to export json.";
+        return;
+    }
     json jData, jRoot, jLabels;
     count_t id = 0;
 
@@ -242,6 +257,7 @@ void Analysis::exportJSON (const StatTrie &trie, const string exportFile) {
     jData["threshold"] = trie.getAnomalyRate();
     
     file << jData.dump(2);
+    file.close();
 }
 
 
@@ -283,6 +299,12 @@ void Analysis::writeToFilestream (ofstream& file, const vector<AnomalyEntry>& an
 
 void Analysis::exportAnomaliesToCSV(const string directory) const {
     ofstream fout(directory+"/rare_frequency.csv", ios::trunc);
+
+    if (!fout.is_open()) {
+        cout << "Failed to export anomalies csv to " << directory << endl;
+        return;
+    }
+
     writeToFilestream(fout, freqAnomalies);
     fout.close();
 
@@ -298,6 +320,11 @@ void Analysis::exportAnomaliesToCSV(const string directory) const {
 
 void Analysis::exportCSV(const string exportFile) const {
     ofstream fout(exportFile, ios::trunc);
+    if (!fout.is_open()) {
+        cout << "Failed to export all-entries to csv file " << exportFile << endl;
+        return;
+    }
+
     fout << "String,Frequency,Length,Entropy,Rate,Status\n";
     for (const AnomalyEntry& entry : allEntries) {
         string status="";
@@ -315,6 +342,8 @@ void Analysis::exportCSV(const string exportFile) const {
              << entry.freqRate << ','
              << status << '\n';
     }
+
+    fout.close();
 }
 
 
@@ -343,24 +372,26 @@ string Analysis::escapeCSV(const std::string& s) const {
 /* ==================== Export report to txt ==================== */
 
 void Analysis::exportReport(const string exportFile) const {
+
     ofstream file (exportFile, ios::trunc);
+    if (!file.is_open()) {
+        cout << "Failed to open report file " << exportFile << endl;
+        return;
+    }
+
     file << "==================== TRIE ANALYSIS REPORT ====================\n"
-         << "\n\n-------------------- Original trie statistics --------------------\n"
-         << "Note: This information is used to compare statistics of the Trie with what the analysis module has collected.\n\n"
-         << "- Total inserted words: " << trie.totalInsertedWords() << '\n'
-         << "- Total unique words: " << trie.totalUniqueWords() << '\n'
-         << "- Total nodes: " << trie.totalNodes() << '\n'
-         << "\n\n------------------------ Analyzed statistics -----------------------\n\n"
-         << "- Total inserted words (after analysis): " << totalInsertedWords << '\n'
-         << "- Total unique words (after analysis): " << totalUniqueWords << "\n\n"
-         << "- Total nodes (after analysis): " << totalNodes << '\n'
-         << "- Total unique-word characters: " << totalUniqueWordChar << "\n\n"
-         << "- Compressed rate (total nodes / total unique-word characters): " << (double)totalNodes/totalUniqueWordChar << '\n'
-         << "\n\n-------------------------- Thresholds ----------------------------\n\n"
+
+         << "\n------------------------ Trie statistics -----------------------\n\n"
+         << "- Total inserted words: " << totalInsertedWords << '\n'
+         << "- Total unique words: " << totalUniqueWords << '\n'
+         << "- Total unique-word characters: " << totalUniqueWordChar << '\n'
+         << "- Total nodes: " << totalNodes << '\n'
+         << "- Compressed rate (total unique-word characters / total nodes): " << (double)totalUniqueWordChar/totalNodes << '\n'
+         << "\n-------------------------- Thresholds ----------------------------\n\n"
          << "- Word frequency threshold (" << freqPercentile << "% lower percentile): " << freqThreshold << '\n'
          << "- Length frequency threshold (" << lenPercentile << "% lower percentile): " << lenFreqThreshold << '\n'
          << "- Entropy threshold (" << entropyPercentile << "% lower percentile): " << entropyThreshold << '\n'
-         << "\n\n----------------------- Extremum statistics ------------------------\n\n"
+         << "\n----------------------- Extremum statistics ------------------------\n\n"
          << "Word frequency:\n"
          << "- Max frequency: " << maxFreq << '\n'
          << "- Min frequency: " << minFreq << "\n\n"
@@ -372,8 +403,38 @@ void Analysis::exportReport(const string exportFile) const {
          << "Entropy (local node entropy):\n"
          << "- Max entropy: " << maxEntropy << '\n'
          << "- Min entropy: " << minEntropy << '\n'
-         << "\n\n\n-------------------- ANOMALIES DETECTION --------------------"
-         << "\n\n-------------------- Anomalies: frequency-based --------------------\n\n";
+
+         << "\n-------------------- ANOMALIES DETECTION --------------------"
          
-         // To be continue...
+         << "\n\n-------------------- Anomalies: frequency-based --------------------\n\n";
+
+    size_t n = freqAnomalies.size() > 8 ? 8 : freqAnomalies.size();
+    for (size_t i = 0; i < n; ++i) 
+        file << freqAnomalies[i].word << ", " << "frequency = " << freqAnomalies[i].count << '\n';
+    if (n < freqAnomalies.size()) file << "...";
+    file << "\n\nThere are " << freqAnomalies.size() << " frequency-based anomalies\n"
+         << "Accounted for " << freqAnomaliesRate*100 << "% of the processed text"
+    
+         << "\n\n------------------ Anomalies: length-frequency-based -------------------\n\n";
+
+    n = lenAnomalies.size() > 8 ? 8 : lenAnomalies.size();
+    for (size_t i = 0; i < n; ++i) 
+        file << lenAnomalies[i].word << ", " << "length = " << lenAnomalies[i].depth
+             << ", length frequency = " << lenFreq.at(lenAnomalies[i].depth) << '\n';
+    if (n < lenAnomalies.size()) file << "...";
+    file << "\n\nThere are " << lenAnomalies.size() << " frequency-based anomalies\n"
+         << "Accounted for " << lenAnomaliesRate*100 << "% of the processed text"
+
+         << "\n\n------------------ Anomalies: entropy-based -------------------\n\n";
+
+    n = entropyAnomalies.size() > 8 ? 8 : entropyAnomalies.size();
+    for (size_t i = 0; i < n; ++i) 
+        file << entropyAnomalies[i].word << ", " << "entropy = " << entropyAnomalies[i].entropy << '\n';
+    if (n < entropyAnomalies.size()) file << "...";
+    file << "\n\nThere are " << entropyAnomalies.size() << " frequency-based anomalies\n"
+         << "Accounted for " << entropyAnomaliesRate*100 << "% of the processed text"
+
+         << "\n\n======================= END OF REPORT =============================";
+
+    file.close();
 }
