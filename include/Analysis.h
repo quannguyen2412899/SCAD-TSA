@@ -27,20 +27,15 @@ struct AnomalyEntry {
  * @brief
  * How to use:
 
-Ananlys a(trie);
-a.collectStatistics();
+Ananlys a();
+a.collectStatistics(trie);
 a.report();
-
-* What's next:
- remove trie as an attribute
- instead read from an outside trie?
-
 */
 class Analysis {
 
 private:
 
-    const StatTrie &trie;
+    const StatTrie* trie;
     std::vector<AnomalyEntry> allEntries;
     vector<AnomalyEntry> freqAnomalies;
     vector<AnomalyEntry> lenAnomalies;
@@ -59,14 +54,14 @@ private:
     unsigned totalNodes;
     unsigned totalUniqueWordChar;
     
-    double maxEntropy;
-    double minEntropy;
     unsigned maxFreq;
     unsigned minFreq;
     unsigned maxDepth;
     unsigned minDepth;
-    unsigned mostPopLength;
-    unsigned leastPopLength;
+    double maxEntropy;
+    double minEntropy;
+    // unsigned mostPopLength;
+    // unsigned leastPopLength;
     unordered_map<unsigned, unsigned> lenFreq;
 
     double freqAnomaliesRate;
@@ -85,12 +80,12 @@ private:
 
     public:
 
-    Analysis(const StatTrie &trie, double freqPercentile = 5, double entropyPercentile = 5, double lenPercentile = 5);
+    Analysis(double freqPercentile = 5, double entropyPercentile = 5, double lenPercentile = 5);
 
-    void collectStatistics();
+    void collectStatistics(const StatTrie* _trie);
 
     // xuất report, json, csv
-    void report(const string directory = "data/output");
+    void report(const string directory = "data/output") const;
 
     void exportReport(const string exportFile = "data/output/overall_report.txt") const;
     
@@ -98,7 +93,7 @@ private:
     void exportAnomaliesToJSON(const string directory = "data/output") const;
 
     static void exportJSON(const StatTrie &trie, const string exportFile = "data/output/trie.json");
-    void exportJSON(const string exportFile = "data/output/trie.json");
+    void exportJSON(const string exportFile = "data/output/trie.json") const;
     void exportAnomaliesToCSV(const string directory = "data/output") const;
 
     void printAnomalies(const std::vector<AnomalyEntry> &anomalies) const;

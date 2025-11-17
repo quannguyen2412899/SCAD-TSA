@@ -4,15 +4,15 @@ using json = nlohmann::json;
 
 /* ==================== Constructor ==================== */
 
-Analysis::Analysis(const StatTrie &trie, double freqPercentile, double entropyPercentile, double lenPercentile) : 
-    trie(trie),
+Analysis::Analysis(double freqPercentile, double entropyPercentile, double lenPercentile) : 
+    // trie(trie),
     freqPercentile(freqPercentile), entropyPercentile(entropyPercentile), lenPercentile(lenPercentile),
     freqThreshold(0), entropyThreshold(0), lenFreqThreshold(0),
     totalInsertedWords(0), totalUniqueWords(0), totalNodes(0), totalUniqueWordChar(0),
     maxFreq(0), minFreq(0),
-    maxEntropy(0), minEntropy(0),
     maxDepth(0), minDepth(0),
-    mostPopLength(0), leastPopLength(0),
+    maxEntropy(0), minEntropy(0),
+    // mostPopLength(0), leastPopLength(0),
     freqAnomaliesRate(0), lenAnomaliesRate(0), entropyAnomaliesRate(0) {}
 
     
@@ -36,11 +36,12 @@ double Analysis::computeLocalEntropy(const StatTrie::Node* node) {
 
 /* ==================== Traverse Trie and collect statistics ==================== */
 
-void Analysis::collectStatistics() {
+void Analysis::collectStatistics(const StatTrie* _trie) {
 
-    totalInsertedWords = trie.totalInsertedWords();
-    totalUniqueWords = trie.totalUniqueWords();
-    totalNodes = trie.totalNodes();
+    trie = _trie;
+    totalInsertedWords = trie->totalInsertedWords();
+    totalUniqueWords = trie->totalUniqueWords();
+    totalNodes = trie->totalNodes();
 
     allEntries.clear();
     
@@ -74,7 +75,7 @@ void Analysis::collectStatistics() {
             totalUniqueWordChar += entry.depth;
         }
     };
-    trie.traverse(callback);
+    trie->traverse(callback);
 
     sort(allEntries.begin(), allEntries.end(), [](AnomalyEntry& a, AnomalyEntry& b) {
         return a.word.compare(b.word) < 0;
@@ -134,7 +135,7 @@ void Analysis::computePercentileThresholds(double freqPercentile, double entropy
     size_t fIdx = (size_t)((freqPercentile/100.0) * freqs.size());
     size_t eIdx = (size_t)((entropyPercentile/100.0) * entropies.size());
     size_t lIdx = 0;
-    for (size_t count = lenFreqs[0].second; count < (lenPercentile/100.0) * trie.totalInsertedWords(); count += lenFreqs[++lIdx].second);
+    for (size_t count = lenFreqs[0].second; count < (lenPercentile/100.0) * totalInsertedWords; count += lenFreqs[++lIdx].second);
 
     if (fIdx >= freqs.size()) fIdx = freqs.size() - 1;
     if (eIdx >= entropies.size()) eIdx = entropies.size() - 1;
@@ -149,14 +150,14 @@ void Analysis::computePercentileThresholds(double freqPercentile, double entropy
 
 /* ==================== Export report, csv and json ====================*/
 
-void Analysis::report(const string directory) {
+void Analysis::report(const string directory) const {
 
     cout << "All outputs are stored in " << directory << endl;
 
     exportAnomaliesToCSV(directory);
     exportAnomaliesToJSON(directory);
 
-    if (trie.totalNodes() <= 256) exportJSON(directory+"/trie.json");
+    if (totalNodes <= 256) exportJSON(directory+"/trie.json");
     else {
         cout << "The whole trie is too big, not exporting it to json." << endl;
     }
@@ -228,8 +229,8 @@ void Analysis::printAnomalies(const vector<AnomalyEntry> &anomalies) const {
 
 /* ==================== Export to json ==================== */
 
-void Analysis::exportJSON(const string exportFile) {
-    exportJSON(trie, exportFile);
+void Analysis::exportJSON(const string exportFile) const {
+    exportJSON(*trie, exportFile);
 }
 
 
