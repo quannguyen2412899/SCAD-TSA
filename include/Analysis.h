@@ -36,6 +36,7 @@ class Analysis {
 private:
 
     const StatTrie* trie;
+    unordered_set<const StatTrie::Node*, bool> isAnomaly;
     std::vector<AnomalyEntry> allEntries;
     vector<AnomalyEntry> freqAnomalies;
     vector<AnomalyEntry> lenAnomalies;
@@ -60,22 +61,20 @@ private:
     unsigned minDepth;
     double maxEntropy;
     double minEntropy;
-    // unsigned mostPopLength;
-    // unsigned leastPopLength;
     unordered_map<unsigned, unsigned> lenFreq;
 
     double freqAnomaliesRate;
     double lenAnomaliesRate;
     double entropyAnomaliesRate;
     
-
     double computeLocalEntropy(const StatTrie::Node* node);
     void computePercentileThresholds(double freqPercentile, double entropyPercentile, double lenPercentile);
-    string escapeCSV(const std::string& s) const;
-    void writeToFilestream (ofstream& file, const vector<AnomalyEntry>& anomalies) const;
     void getExtremum();
-
     void detectAnomalies();
+
+    string escapeCSV(const std::string& s) const;
+    void writeCSVToFilestream (ofstream& file, const vector<AnomalyEntry>& anomalies) const;
+    void exportJSON(const StatTrie &_trie, const string exportFile = "data/output/trie.json") const;
 
 
     public:
@@ -86,17 +85,14 @@ private:
 
     // xuất report, json, csv
     void report(const string directory = "data/output") const;
-
     void exportReport(const string exportFile = "data/output/overall_report.txt") const;
     
     void exportCSV(const string exportFile = "data/output/all_entries.csv") const;
     void exportAnomaliesToJSON(const string directory = "data/output") const;
-
-    static void exportJSON(const StatTrie &trie, const string exportFile = "data/output/trie.json");
     void exportJSON(const string exportFile = "data/output/trie.json") const;
     void exportAnomaliesToCSV(const string directory = "data/output") const;
 
-    void printAnomalies(const std::vector<AnomalyEntry> &anomalies) const;
+    // void printAnomalies(const std::vector<AnomalyEntry> &anomalies) const;
 
 };
 

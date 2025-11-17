@@ -212,19 +212,19 @@ void Analysis::detectAnomalies() {
 
 /* ==================== Print anomalies to screen ==================== */
 
-void Analysis::printAnomalies(const vector<AnomalyEntry> &anomalies) const {
-    // std::cout << "Word\tCount\tFreqRate\tEntropy\tDepth\tScore\n";
-    std::cout << "String\tCount\tFreqRate\tEntropy\tDepth\n";
-    std::cout << "---------------------------------------------------------------\n";
-    for (auto &a : anomalies) {
-        std::cout << a.word << "\t"
-                    << a.count << "\t"
-                    << std::fixed << std::setprecision(5) << a.freqRate << "\t"
-                    << a.entropy << "\t"
-                    << a.depth << "\n";
-                    // << a.score << "\n";
-    }
-}
+// void Analysis::printAnomalies(const vector<AnomalyEntry> &anomalies) const {
+//     // std::cout << "Word\tCount\tFreqRate\tEntropy\tDepth\tScore\n";
+//     std::cout << "String\tCount\tFreqRate\tEntropy\tDepth\n";
+//     std::cout << "---------------------------------------------------------------\n";
+//     for (auto &a : anomalies) {
+//         std::cout << a.word << "\t"
+//                     << a.count << "\t"
+//                     << std::fixed << std::setprecision(5) << a.freqRate << "\t"
+//                     << a.entropy << "\t"
+//                     << a.depth << "\n";
+//                     // << a.score << "\n";
+//     }
+// }
 
 
 /* ==================== Export to json ==================== */
@@ -234,19 +234,19 @@ void Analysis::exportJSON(const string exportFile) const {
 }
 
 
-void Analysis::exportJSON (const StatTrie &trie, const string exportFile) {
+void Analysis::exportJSON (const StatTrie &_trie, const string exportFile) const {
 
     ofstream file (exportFile, ios::trunc);
     if (!file.is_open()) {
         cout << "Failed to open " << exportFile << "to export json.";
         return;
     }
-    json jData, jRoot, jLabels;
+    json jData, jRoot, jLabels, jIsAnomaly;
     count_t id = 0;
 
     auto collector = [&] (const StatTrie::Node* node, const string &prefix) {
 
-        if (prefix.empty()) jLabels[0] = "";
+        if (prefix.empty()) jLabels[0] = "root";
         else jLabels[id] = string(1, prefix.back());
         json* j = &jRoot;
         for (char c : prefix) j = &((*j)["children"][string(1, c)]);
@@ -256,16 +256,17 @@ void Analysis::exportJSON (const StatTrie &trie, const string exportFile) {
             (*j)["children"][string(1, p.first)] = json::object();
         }
         (*j)["count"] = node->count;
-        (*j)["isEnd"] = node->isEnd;
-        (*j)["ID"] = id++;
-
+        // (*j)["isEnd"] = node->isEnd;
+        (*j)["ID"] = id;
+        jIsAnomaly[id] = (bool)isAnomaly.count(node);
+        id++;
     };
 
-    trie.traverse(collector);
+    _trie.traverse(collector);
     jData["root"] = jRoot;
     jData["labels"] = jLabels;
-    jData["totalUnique"] = trie.totalUniqueWords();
-    jData["threshold"] = trie.getAnomalyRate();
+    jData["totalUnique"] = _trie.totalUniqueWords();
+    jData["isAnomaly"] = jIsAnomaly;
     
     file << jData.dump(2);
     file.close();
@@ -290,8 +291,8 @@ void Analysis::exportAnomaliesToJSON(const string directory) const {
 /* ==================== Export to csv ==================== */
 
 // Helper: write csv content to file stream
-void Analysis::writeToFilestream (ofstream& file, const vector<AnomalyEntry>& anomalies)  const{
-    file << "String,Kind,Frequency,Length,Entropy,Rate,Anomaly\n";
+void Analysis::writeCSVToFilestream (ofstream& file, const vector<AnomalyEntry>& anomalies)  const{
+    file << "String,Kind,Frequency,Length,Length frequency,Entropy,Rate,Anomaly\n";
     for (const AnomalyEntry& entry : anomalies) {
         string status;
         if (entry.count <= freqThreshold) status += "frequency/";
@@ -301,7 +302,8 @@ void Analysis::writeToFilestream (ofstream& file, const vector<AnomalyEntry>& an
         file << escapeCSV(entry.word) << ','
              << (entry.isWord ? "word" : "prefix") << ','
              << entry.count << ',' 
-             << entry.depth << ',' 
+             << entry.depth << ','
+             << (entry.isWord ? lenFreq.at(entry.depth) : 0) << ','
              << entry.entropy << ','
              << entry.freqRate << ','
              << status << '\n';
@@ -317,15 +319,15 @@ void Analysis::exportAnomaliesToCSV(const string directory) const {
         return;
     }
 
-    writeToFilestream(fout, freqAnomalies);
+    writeCSVToFilestream(fout, freqAnomalies);
     fout.close();
 
     fout.open(directory+"/rare_length.csv", ios::trunc);
-    writeToFilestream(fout, lenAnomalies);
+    writeCSVToFilestream(fout, lenAnomalies);
     fout.close();
 
     fout.open(directory+"/rare_entropy.csv", ios::trunc);
-    writeToFilestream(fout, entropyAnomalies);    
+    writeCSVToFilestream(fout, entropyAnomalies);    
     fout.close();
 }
 
@@ -337,7 +339,7 @@ void Analysis::exportCSV(const string exportFile) const {
         return;
     }
 
-    writeToFilestream(fout, allEntries);
+    writeCSVToFilestream(fout, allEntries);
 
     fout.close();
 }
