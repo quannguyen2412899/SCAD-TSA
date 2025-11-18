@@ -26,11 +26,6 @@ void StatTrie::_traverse (function<void(const Node*, const string&)> &callback, 
 /* ---------- BASIC METHODS ---------- */
 
 void StatTrie::insert (string word) {
-    /*
-    Propose:
-    Use root.count to count number of words inserted instead of countInsertedWords
-    Edge case: if (word.size() == 0) return;
-    */
     if (word.size() == 0) return;
     Node* ptr = &root;
     for (char c : word) {
@@ -44,6 +39,26 @@ void StatTrie::insert (string word) {
 
     countInsertedChar += word.size();
     ++countInsertedWords;
+    if (!ptr->isEnd) {
+        ptr->isEnd = true;
+        ++countUniqueWords;
+    }
+}
+
+void StatTrie::insert (string word, count_t num) {
+    if (word.size() == 0) return;
+    Node* ptr = &root;
+    for (char c : word) {
+        if (!ptr->children.count(c)) {
+            ptr->children[c] = new Node;
+            ++countNodes;
+        }
+        ptr = ptr->children[c];
+        ptr->count += num;
+    }
+
+    countInsertedChar += word.size() * num;
+    countInsertedWords += num;
     if (!ptr->isEnd) {
         ptr->isEnd = true;
         ++countUniqueWords;
@@ -140,4 +155,65 @@ double StatTrie::getAnomalyRate() const {
 void StatTrie::traverse (function<void(const Node*, const string&)> callback) const {
     string prefix;
     _traverse (callback, &root, prefix);
+}
+
+void StatTrie::traverse (const string prefix, function<void(const Node*, const string&)> callback) const {
+    const Node* ptr = &root;
+    callback(ptr, "");
+    string _prefix;
+    for (char c : prefix) {
+        if (!ptr->children.count(c)) return;
+        _prefix.push_back(c);
+        ptr = ptr->children.at(c);
+        callback (ptr, _prefix);
+    }
+}
+
+nlohmann::json StatTrie::toJSON(const Node* node, const unordered_set<const Node*> &trimNodes, bool &containTrimNode, unsigned &id) const {
+    nlohmann::json j;
+    nlohmann::json jChildren;
+
+    j["id"] = id++;
+    bool subContain = false;
+
+    for (auto& [ch, child] : node->children) {
+        bool childContain = false;
+        nlohmann::json cj = toJSON(child, trimNodes, childContain, id);
+
+        if (childContain) {
+            cj["label"] = string(1, ch);
+            subContain = true;
+        }
+        else {
+            id = cj["id"].get<unsigned>() + 1;
+            cj["label"] = "...";
+            cj["children"] = nlohmann::json::object();
+        }
+
+        jChildren[string(1, ch)] = std::move(cj);
+    }
+
+    bool isTrim = trimNodes.count(node);
+    containTrimNode = isTrim || subContain;
+
+    j["count"] = node->count;
+    j["color"] = isTrim ? "red" : "black";
+    j["children"] = std::move(jChildren);
+
+    return j;
+}
+
+void StatTrie::exportJSON(const string exportFile, const unordered_set<const Node*> &trimNodes) const {
+    ofstream file (exportFile, ios::trunc);
+    if (!file.is_open()) {
+        cout << "Cannot open " << exportFile << " to export JSON" << endl;
+        return;
+    }
+    unsigned id = 0;
+    bool containTrimNode = false;
+    nlohmann::json j;
+    j["root"] = toJSON(&root, trimNodes, containTrimNode, id);
+    j["root"]["label"] = "root";
+    file << j.dump(2);
+    file.close();
 }

@@ -5,10 +5,16 @@
 #include <unordered_map>
 #include <string>
 #include <functional>
+#include <unordered_set>
+#include <fstream>
+#include <iostream>
+#include "nlohmann/json.hpp"
 
 typedef unsigned int count_t;
 
 using namespace std;
+
+class Analysis;
 
 class StatTrie {
 
@@ -23,6 +29,11 @@ class StatTrie {
         ~Node() {
             for (pair<const char, Node*> p : children) delete p.second;
         }
+        count_t countEnd() const {
+            count_t result = count;
+            for (const pair<const char, Node*> &p : children) result -= p.second->count;
+            return result;
+        }
     };
 
     private:
@@ -35,6 +46,9 @@ class StatTrie {
     count_t countInsertedWords; // Total number of words inserted to Trie (including duplications)
 
     void _traverse (function<void(const Node*, const string&)> &callback, const Node* currNode, string &prefix) const;
+    nlohmann::json toJSON(const Node* root, const unordered_set<const Node*> &trimNodes, bool &containTrimNode, unsigned &id) const;
+
+    friend class Analysis;
 
     public:
 
@@ -42,6 +56,7 @@ class StatTrie {
     // ~StatTrie();
     
     void insert (string word);
+    void insert (string word, count_t num);
     bool contains (string word) const;
     bool startWith (string prefix) const;
     void remove (string word);
@@ -56,6 +71,9 @@ class StatTrie {
     double getAnomalyRate () const;
     
     void traverse (function<void(const Node*, const string&)> callback) const;
+    void traverse (const string prefix, function<void(const Node*, const string&)> callback) const;
+
+    void exportJSON(const string exportFile, const unordered_set<const Node*> &trimNodes) const;
 
 };
 
