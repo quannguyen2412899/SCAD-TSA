@@ -155,6 +155,7 @@ void Analysis::markAnomalyNodes(unordered_set<const StatTrie::Node*> &anomalyNod
         markAnomalyNodes(anomalyNodes, 'f');
         markAnomalyNodes(anomalyNodes, 'l');
         markAnomalyNodes(anomalyNodes, 'e');
+        return;
     }
     else if (mode == 'f') anomalies = &freqAnomalies;
     else if (mode == 'l') anomalies = &lenAnomalies;
@@ -163,10 +164,10 @@ void Analysis::markAnomalyNodes(unordered_set<const StatTrie::Node*> &anomalyNod
         cout << "Unsupported mode: " << mode << endl;
         return;
     }
-
+    
     string path;
     auto callback = [&] (const StatTrie::Node* node, const string &prefix) {
-        if (prefix == path) anomalyNodes.insert(node);
+        if (prefix == path && node) anomalyNodes.insert(node);
     };
 
     for (const AnomalyEntry& e : *anomalies) {

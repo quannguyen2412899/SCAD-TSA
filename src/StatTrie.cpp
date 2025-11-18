@@ -162,7 +162,7 @@ void StatTrie::traverse (const string prefix, function<void(const Node*, const s
     callback(ptr, "");
     string _prefix;
     for (char c : prefix) {
-        if (!ptr->children.count(c)) return;
+        if (!ptr->children.count(c) || !ptr) return;
         _prefix.push_back(c);
         ptr = ptr->children.at(c);
         callback (ptr, _prefix);
@@ -170,8 +170,10 @@ void StatTrie::traverse (const string prefix, function<void(const Node*, const s
 }
 
 nlohmann::json StatTrie::toJSON(const Node* node, const unordered_set<const Node*> &trimNodes, bool &containTrimNode, unsigned &id) const {
+    
+    if (!node) return nlohmann::json::object(); // guard
     nlohmann::json j;
-    nlohmann::json jChildren;
+    nlohmann::json jChildren = nlohmann::json::object();
 
     j["id"] = id++;
     bool subContain = false;
@@ -185,7 +187,7 @@ nlohmann::json StatTrie::toJSON(const Node* node, const unordered_set<const Node
             subContain = true;
         }
         else {
-            id = cj["id"].get<unsigned>() + 1;
+            if (cj.contains("id")) id = cj["id"].get<unsigned>() + 1;
             cj["label"] = "...";
             cj["children"] = nlohmann::json::object();
         }
@@ -196,6 +198,7 @@ nlohmann::json StatTrie::toJSON(const Node* node, const unordered_set<const Node
     bool isTrim = trimNodes.count(node);
     containTrimNode = isTrim || subContain;
 
+    j["isEnd"] = node->isEnd;
     j["count"] = node->count;
     j["color"] = isTrim ? "red" : "black";
     j["children"] = std::move(jChildren);
