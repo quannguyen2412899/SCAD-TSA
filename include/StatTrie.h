@@ -5,6 +5,10 @@
 #include <unordered_map>
 #include <string>
 #include <functional>
+#include <unordered_set>
+#include <fstream>
+#include <iostream>
+#include "nlohmann/json.hpp"
 
 typedef unsigned int count_t;
 
@@ -42,6 +46,7 @@ class StatTrie {
     count_t countInsertedWords; // Total number of words inserted to Trie (including duplications)
 
     void _traverse (function<void(const Node*, const string&)> &callback, const Node* currNode, string &prefix) const;
+    nlohmann::json toJSON(const Node* root, const unordered_set<const Node*> &trimNodes, bool &containTrimNode, unsigned &id) const;
 
     friend class Analysis;
 
@@ -67,6 +72,8 @@ class StatTrie {
     
     void traverse (function<void(const Node*, const string&)> callback) const;
     void traverse (const string prefix, function<void(const Node*, const string&)> callback) const;
+
+    void exportJSON(const string exportFile, const unordered_set<const Node*> &trimNodes) const;
 
 };
 

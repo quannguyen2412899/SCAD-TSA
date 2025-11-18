@@ -160,8 +160,60 @@ void StatTrie::traverse (function<void(const Node*, const string&)> callback) co
 void StatTrie::traverse (const string prefix, function<void(const Node*, const string&)> callback) const {
     const Node* ptr = &root;
     callback(ptr, "");
+    string _prefix;
     for (char c : prefix) {
+        if (!ptr->children.count(c)) return;
+        _prefix.push_back(c);
         ptr = ptr->children.at(c);
-        callback (ptr, "");
+        callback (ptr, _prefix);
     }
+}
+
+nlohmann::json StatTrie::toJSON(const Node* node, const unordered_set<const Node*> &trimNodes, bool &containTrimNode, unsigned &id) const {
+    nlohmann::json j;
+    nlohmann::json jChildren;
+
+    j["id"] = id++;
+    bool subContain = false;
+
+    for (auto& [ch, child] : node->children) {
+        bool childContain = false;
+        nlohmann::json cj = toJSON(child, trimNodes, childContain, id);
+
+        if (childContain) {
+            cj["label"] = string(1, ch);
+            subContain = true;
+        }
+        else {
+            id = cj["id"].get<unsigned>() + 1;
+            cj["label"] = "...";
+            cj["children"] = nlohmann::json::object();
+        }
+
+        jChildren[string(1, ch)] = std::move(cj);
+    }
+
+    bool isTrim = trimNodes.count(node);
+    containTrimNode = isTrim || subContain;
+
+    j["count"] = node->count;
+    j["color"] = isTrim ? "red" : "black";
+    j["children"] = std::move(jChildren);
+
+    return j;
+}
+
+void StatTrie::exportJSON(const string exportFile, const unordered_set<const Node*> &trimNodes) const {
+    ofstream file (exportFile, ios::trunc);
+    if (!file.is_open()) {
+        cout << "Cannot open " << exportFile << " to export JSON" << endl;
+        return;
+    }
+    unsigned id = 0;
+    bool containTrimNode = false;
+    nlohmann::json j;
+    j["root"] = toJSON(&root, trimNodes, containTrimNode, id);
+    j["root"]["label"] = "root";
+    file << j.dump(2);
+    file.close();
 }

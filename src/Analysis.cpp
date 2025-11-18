@@ -148,25 +148,32 @@ void Analysis::computePercentileThresholds() {
 }
 
 
-void Analysis::markAnomalyNodes() {
-    string str;
+void Analysis::markAnomalyNodes(unordered_set<const StatTrie::Node*> &anomalyNodes, const char mode) const {
+    
+    const vector<AnomalyEntry>* anomalies = 0;
+    if (mode == 'a') {
+        markAnomalyNodes(anomalyNodes, 'f');
+        markAnomalyNodes(anomalyNodes, 'l');
+        markAnomalyNodes(anomalyNodes, 'e');
+    }
+    else if (mode == 'f') anomalies = &freqAnomalies;
+    else if (mode == 'l') anomalies = &lenAnomalies;
+    else if (mode == 'e') anomalies = &entropyAnomalies;
+    else {
+        cout << "Unsupported mode: " << mode << endl;
+        return;
+    }
+
+    string path;
     auto callback = [&] (const StatTrie::Node* node, const string &prefix) {
-        if (str == prefix) {
-            anomalyNodes.insert(node);
-        }
+        if (prefix == path) anomalyNodes.insert(node);
     };
-    for (const AnomalyEntry& e : freqAnomalies) {
-        str = e.word;
-        trie->traverse(str, callback);
+
+    for (const AnomalyEntry& e : *anomalies) {
+        path = e.word;
+        trie->traverse(path, callback);
     }
-    for (const AnomalyEntry& e : lenAnomalies) {
-        str = e.word;
-        trie->traverse(str, callback);
-    }
-    for (const AnomalyEntry& e : entropyAnomalies) {
-        str = e.word;
-        trie->traverse(str, callback);
-    }
+
 }
 
 
@@ -177,15 +184,14 @@ void Analysis::report(const string directory) const {
 
     cout << "All outputs are stored in " << directory << endl;
 
+    // exportAnomaliesToJSON(directory);
+
+    // if (totalNodes <= 256) exportJSON(directory+"/trie.json");
+    // else {
+    //     cout << "The whole trie is too big, not exporting it to json." << endl;
+    // }
+
     exportAnomaliesToCSV(directory);
-    exportAnomaliesToJSON(directory);
-
-    if (totalNodes <= 256) exportJSON(directory+"/trie.json");
-    else {
-        cout << "The whole trie is too big, not exporting it to json." << endl;
-    }
-
-    // xuất csv cho toàn bộ cây trie
     exportCSV(directory+"/all_entries.csv");
     exportReport(directory+"/overall_report.txt");
 
@@ -252,63 +258,63 @@ void Analysis::detectAnomalies() {
 
 /* ==================== Export to json ==================== */
 
-void Analysis::exportJSON(const string exportFile) const {
-    exportJSON(*trie, exportFile);
-}
+// void Analysis::exportJSON(const string exportFile) const {
+//     exportJSON(*trie, exportFile);
+// }
 
 
-void Analysis::exportJSON (const StatTrie &_trie, const string exportFile) const {
+// void Analysis::exportJSON (const StatTrie &_trie, const string exportFile) const {
 
-    ofstream file (exportFile, ios::trunc);
-    if (!file.is_open()) {
-        cout << "Failed to open " << exportFile << "to export json.";
-        return;
-    }
-    json jData, jRoot, jLabels, jIsAnomaly;
-    count_t id = 0;
+//     ofstream file (exportFile, ios::trunc);
+//     if (!file.is_open()) {
+//         cout << "Failed to open " << exportFile << "to export json.";
+//         return;
+//     }
+//     json jData, jRoot, jLabels, jIsAnomaly;
+//     count_t id = 0;
 
-    auto collector = [&] (const StatTrie::Node* node, const string &prefix) {
+//     auto collector = [&] (const StatTrie::Node* node, const string &prefix) {
 
-        if (prefix.empty()) jLabels[0] = "root";
-        else jLabels[id] = string(1, prefix.back());
-        json* j = &jRoot;
-        for (char c : prefix) j = &((*j)["children"][string(1, c)]);
+//         if (prefix.empty()) jLabels[0] = "root";
+//         else jLabels[id] = string(1, prefix.back());
+//         json* j = &jRoot;
+//         for (char c : prefix) j = &((*j)["children"][string(1, c)]);
 
-        (*j)["children"] = json::object();
-        for (const pair<const char, StatTrie::Node*> p : node->children) {
-            (*j)["children"][string(1, p.first)] = json::object();
-        }
-        (*j)["count"] = node->count;
-        // (*j)["isEnd"] = node->isEnd;
-        (*j)["ID"] = id;
-        jIsAnomaly[id] = (bool)anomalyNodes.count(node);
-        id++;
-    };
+//         (*j)["children"] = json::object();
+//         for (const pair<const char, StatTrie::Node*> p : node->children) {
+//             (*j)["children"][string(1, p.first)] = json::object();
+//         }
+//         (*j)["count"] = node->count;
+//         // (*j)["isEnd"] = node->isEnd;
+//         (*j)["ID"] = id;
+//         jIsAnomaly[id] = (bool)anomalyNodes.count(node);
+//         id++;
+//     };
 
-    _trie.traverse(collector);
-    jData["root"] = jRoot;
-    jData["labels"] = jLabels;
-    jData["totalUnique"] = _trie.totalUniqueWords();
-    jData["isAnomaly"] = jIsAnomaly;
+//     _trie.traverse(collector);
+//     jData["root"] = jRoot;
+//     jData["labels"] = jLabels;
+//     jData["totalUnique"] = _trie.totalUniqueWords();
+//     jData["isAnomaly"] = jIsAnomaly;
     
-    file << jData.dump(2);
-    file.close();
-}
+//     file << jData.dump(2);
+//     file.close();
+// }
 
 
-void Analysis::exportAnomaliesToJSON(const string directory) const {
-    StatTrie rareTrie;
-    for (const AnomalyEntry &entry : freqAnomalies) rareTrie.insert(entry.word, entry.count);
-    exportJSON(rareTrie, directory+"/rare_frequency.json");
+// void Analysis::exportAnomaliesToJSON(const string directory) const {
+//     StatTrie rareTrie;
+//     for (const AnomalyEntry &entry : freqAnomalies) rareTrie.insert(entry.word, entry.count);
+//     exportJSON(rareTrie, directory+"/rare_frequency.json");
 
-    rareTrie.clear();
-    for (const AnomalyEntry &entry : lenAnomalies) rareTrie.insert(entry.word, entry.count);
-    exportJSON(rareTrie, directory+"/rare_length.json");
+//     rareTrie.clear();
+//     for (const AnomalyEntry &entry : lenAnomalies) rareTrie.insert(entry.word, entry.count);
+//     exportJSON(rareTrie, directory+"/rare_length.json");
     
-    rareTrie.clear();
-    for (const AnomalyEntry &entry : entropyAnomalies) rareTrie.insert(entry.word, entry.count);
-    exportJSON(rareTrie, directory+"/rare_entropy.json");   
-}
+//     rareTrie.clear();
+//     for (const AnomalyEntry &entry : entropyAnomalies) rareTrie.insert(entry.word, entry.count);
+//     exportJSON(rareTrie, directory+"/rare_entropy.json");   
+// }
 
 
 /* ==================== Export to csv ==================== */
