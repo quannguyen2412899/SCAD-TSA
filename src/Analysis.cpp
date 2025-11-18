@@ -148,6 +148,28 @@ void Analysis::computePercentileThresholds() {
 }
 
 
+void Analysis::markAnomalyNodes() {
+    string str;
+    auto callback = [&] (const StatTrie::Node* node, const string &prefix) {
+        if (str == prefix) {
+            anomalyNodes.insert(node);
+        }
+    };
+    for (const AnomalyEntry& e : freqAnomalies) {
+        str = e.word;
+        trie->traverse(str, callback);
+    }
+    for (const AnomalyEntry& e : lenAnomalies) {
+        str = e.word;
+        trie->traverse(str, callback);
+    }
+    for (const AnomalyEntry& e : entropyAnomalies) {
+        str = e.word;
+        trie->traverse(str, callback);
+    }
+}
+
+
 
 /* ==================== Export report, csv and json ====================*/
 
@@ -259,7 +281,7 @@ void Analysis::exportJSON (const StatTrie &_trie, const string exportFile) const
         (*j)["count"] = node->count;
         // (*j)["isEnd"] = node->isEnd;
         (*j)["ID"] = id;
-        jIsAnomaly[id] = (bool)isAnomaly.count(node);
+        jIsAnomaly[id] = (bool)anomalyNodes.count(node);
         id++;
     };
 
@@ -428,7 +450,7 @@ void Analysis::exportReport(const string exportFile) const {
 
     n = entropyAnomalies.size() > 8 ? 8 : entropyAnomalies.size();
     for (size_t i = 0; i < n; ++i) 
-        file << entropyAnomalies[i].word << ", entropy = " << entropyAnomalies[i].entropy << ", frequency =" << entropyAnomalies[i].count << '\n';
+        file << entropyAnomalies[i].word << ", entropy = " << entropyAnomalies[i].entropy << ", frequency = " << entropyAnomalies[i].count << '\n';
     if (n < entropyAnomalies.size()) file << "...\n";
     file << "\nThere are " << entropyAnomalies.size() << " entropy-based anomalies\n"
          << "Accounted for " << entropyAnomaliesRate*100 << "% of the processed text"

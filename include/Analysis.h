@@ -36,7 +36,7 @@ class Analysis {
 private:
 
     const StatTrie* trie;
-    unordered_set<const StatTrie::Node*> isAnomaly;
+    unordered_set<const StatTrie::Node*> anomalyNodes;
     std::vector<AnomalyEntry> allEntries;
     vector<AnomalyEntry> freqAnomalies;
     vector<AnomalyEntry> lenAnomalies;
@@ -71,6 +71,7 @@ private:
     void computePercentileThresholds();
     void getExtremum();
     void detectAnomalies();
+    void markAnomalyNodes();
 
     string escapeCSV(const std::string& s) const;
     void writeCSVToFilestream (ofstream& file, const vector<AnomalyEntry>& anomalies) const;
