@@ -1,4 +1,5 @@
 #include "../include/Analysis.h"
+using namespace std;
 using json = nlohmann::json;
 
 
@@ -18,7 +19,7 @@ Analysis::Analysis(double freqPercentile, double entropyPercentile, double lenPe
     
 /* ==================== Helper: Compute entropy ==================== */
 
-double Analysis::computeLocalEntropy(const StatTrie::Node* node) {
+double Analysis::computeLocalEntropy(const Node* node) {
     // if (node->children.empty()) return 0.0;
     double total = node->count;
 
@@ -45,7 +46,7 @@ void Analysis::collectStatistics(const StatTrie* _trie) {
 
     allEntries.clear();
     
-    auto callback = [&](const StatTrie::Node* node, const std::string &word){
+    auto callback = [&](const Node* node, const std::string &word){
         double localEntropy = computeLocalEntropy(node);
         if (localEntropy > 0) {
             AnomalyEntry entry;
@@ -148,7 +149,7 @@ void Analysis::computePercentileThresholds() {
 }
 
 
-void Analysis::markAnomalyNodes(unordered_set<const StatTrie::Node*> &anomalyNodes, const char mode) const {
+void Analysis::markAnomalyNodes(unordered_set<const Node*> &anomalyNodes, const char mode) const {
     
     const vector<AnomalyEntry>* anomalies = 0;
     if (mode == 'a') {
@@ -161,12 +162,12 @@ void Analysis::markAnomalyNodes(unordered_set<const StatTrie::Node*> &anomalyNod
     else if (mode == 'l') anomalies = &lenAnomalies;
     else if (mode == 'e') anomalies = &entropyAnomalies;
     else {
-        cout << "Unsupported mode: " << mode << endl;
+        cout << "[ERROR] Unsupported mode: " << mode << endl;
         return;
     }
     
     string path;
-    auto callback = [&] (const StatTrie::Node* node, const string &prefix) {
+    auto callback = [&] (const Node* node, const string &prefix) {
         if (prefix == path && node) anomalyNodes.insert(node);
     };
 
@@ -181,22 +182,15 @@ void Analysis::markAnomalyNodes(unordered_set<const StatTrie::Node*> &anomalyNod
 
 /* ==================== Export report, csv and json ====================*/
 
-void Analysis::report(const string directory) const {
+// void Analysis::report(const string directory) const {
 
-    cout << "All outputs are stored in " << directory << endl;
+//     cout << "All outputs are stored in " << directory << endl;
 
-    // exportAnomaliesToJSON(directory);
+//     exportAnomaliesToCSV(directory);
+//     exportCSV(directory+"/all_entries.csv");
+//     exportReport(directory+"/overall_report.txt");
 
-    // if (totalNodes <= 256) exportJSON(directory+"/trie.json");
-    // else {
-    //     cout << "The whole trie is too big, not exporting it to json." << endl;
-    // }
-
-    exportAnomaliesToCSV(directory);
-    exportCSV(directory+"/all_entries.csv");
-    exportReport(directory+"/overall_report.txt");
-
-}
+// }
 
 
 /* ==================== Detect anomalies by frequency/length/entropy ==================== */
@@ -341,36 +335,23 @@ void Analysis::writeCSVToFilestream (ofstream& file, const vector<AnomalyEntry>&
 }
 
 
-void Analysis::exportAnomaliesToCSV(const string directory) const {
-    ofstream fout(directory+"/rare_frequency.csv", ios::trunc);
+void Analysis::exportCSV(const string exportFile, char mode) const {
+    ofstream fout;
+    const vector<AnomalyEntry> *entries;
 
+    if (mode == 'a') entries = &allEntries;
+    else if (mode == 'f') entries = &freqAnomalies;
+    else if (mode == 'l') entries = &lenAnomalies;
+    else if (mode == 'e') entries = &entropyAnomalies;
+    else cout << "[ERROR] Unsupported mode" << endl;
+
+    fout.open(exportFile, ios::trunc);
     if (!fout.is_open()) {
-        cout << "Failed to export anomalies csv to " << directory << endl;
-        return;
-    }
-
-    writeCSVToFilestream(fout, freqAnomalies);
-    fout.close();
-
-    fout.open(directory+"/rare_length.csv", ios::trunc);
-    writeCSVToFilestream(fout, lenAnomalies);
-    fout.close();
-
-    fout.open(directory+"/rare_entropy.csv", ios::trunc);
-    writeCSVToFilestream(fout, entropyAnomalies);    
-    fout.close();
-}
-
-
-void Analysis::exportCSV(const string exportFile) const {
-    ofstream fout(exportFile, ios::trunc);
-    if (!fout.is_open()) {
-        cout << "Failed to export all entries to csv file " << exportFile << endl;
+        cout << "[ERROR] Failed to export anomalies to " << exportFile << endl;
         return;
     }
 
     writeCSVToFilestream(fout, allEntries);
-
     fout.close();
 }
 

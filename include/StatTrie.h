@@ -2,79 +2,69 @@
 #define _STATTRIE_
 
 
-#include <unordered_map>
-#include <string>
-#include <functional>
-#include <unordered_set>
-#include <fstream>
 #include <iostream>
+#include <fstream>
+#include <string>
+#include <vector>
+#include <unordered_set>
+#include <unordered_map>
+#include <functional>
+#include <algorithm>
+#include <iomanip>
+#include <cmath>
 #include "nlohmann/json.hpp"
 
-typedef unsigned int count_t;
 
-using namespace std;
 
-class Analysis;
+struct Node {
+    std::unordered_map<char, Node*> children;
+    unsigned count;
+    bool isEnd;
+
+    Node();
+    // ~Node();
+    unsigned countEnd() const;
+};
 
 class StatTrie {
-
-    public:
-
-    struct Node {
-        unordered_map<char, Node*> children;
-        count_t count;
-        bool isEnd;
-
-        Node() : count(0), isEnd(false) {}
-        ~Node() {
-            for (pair<const char, Node*> p : children) delete p.second;
-        }
-        count_t countEnd() const {
-            count_t result = count;
-            for (const pair<const char, Node*> &p : children) result -= p.second->count;
-            return result;
-        }
-    };
-
+    
     private:
 
-    Node root;
-    double anomalyRate;  // The occurence rate of one word below this rate => anomaly
-    count_t countNodes; // Total number of Nodes currently in Trie
-    count_t countUniqueWords;   // Total number of unique words currently stored in Trie
-    count_t countInsertedChar;  // Total number of characters inserted to Trie (increased by inserting word's size for each insertion)
-    count_t countInsertedWords; // Total number of words inserted to Trie (including duplications)
+    Node* root;
+    unsigned countNodes; // Total number of Nodes currently in Trie
+    unsigned countUniqueWordChar;
+    unsigned countUniqueWords;   // Total number of unique words currently stored in Trie
+    unsigned countInsertedWords; // Total number of words inserted to Trie (including duplications)
 
-    void _traverse (function<void(const Node*, const string&)> &callback, const Node* currNode, string &prefix) const;
-    nlohmann::json toJSON(const Node* root, const unordered_set<const Node*> &trimNodes, bool &containTrimNode, unsigned &id) const;
+    void _clear (Node* node);
+    void _traverse (std::function<void(const Node*, const std::string&)> &callback, const Node* currNode, std::string &prefix) const;
+    
+    nlohmann::json toPartialJSON(const Node* root, const std::unordered_set<const Node*> &trimNodes, bool &containTrimNode, unsigned &id) const;
+    nlohmann::json toJSON(const Node* root, const std::unordered_set<const Node*> &anomalyNodes, unsigned &id) const;
 
-    friend class Analysis;
 
     public:
 
-    StatTrie(double anomalyRate = 0.001);
-    // ~StatTrie();
+    StatTrie();
+    ~StatTrie();
     
-    void insert (string word);
-    void insert (string word, count_t num);
-    bool contains (string word) const;
-    bool startWith (string prefix) const;
-    void remove (string word);
+    void insert (std::string word);
+    void insert (std::string word, unsigned num);
+    bool contains (std::string word) const;
+    bool startWith (std::string prefix) const;
+    void remove (std::string word);
     void clear();
 
-    count_t totalNodes() const;
-    count_t totalInsertedCharacters() const;
-    count_t totalInsertedWords() const;
-    count_t totalUniqueWords() const;
+    unsigned totalNodes() const;
+    unsigned totalUniqueWordCharacters() const;
+    unsigned totalInsertedWords() const;
+    unsigned totalUniqueWords() const;
 
-    void setAnomalyRate (double rate);
-    double getAnomalyRate () const;
-    
-    void traverse (function<void(const Node*, const string&)> callback) const;
-    void traverse (const string prefix, function<void(const Node*, const string&)> callback) const;
+    void traverse (std::function<void(const Node*, const std::string&)> callback) const;
+    void traverse (const std::string prefix, std::function<void(const Node*, const std::string&)> callback) const;
 
-    void exportJSON(const string exportFile, const unordered_set<const Node*> &trimNodes) const;
-
+    void exportPartialJSON(const std::string exportFile, const std::unordered_set<const Node*> &trimNodes) const;
+    void exportAllJSON(const std::string exportFile, const std::unordered_set<const Node*> &anomalyNodes) const;
 };
 
 
