@@ -47,7 +47,7 @@ int main(int argc, char *argv[]) {
 
     /* Output */
     //  brief report
-    a.exportReport(outputDir+"/report.txt");
+    a.exportReport(outputDir+"/overall_report.txt");
     //  csv
     a.exportCSV(outputDir+"/all_anomalies.csv");
     a.exportCSV(outputDir+"/frequency_anomalies.csv", 'f');

@@ -351,7 +351,7 @@ void Analysis::exportCSV(const string exportFile, char mode) const {
         return;
     }
 
-    writeCSVToFilestream(fout, allEntries);
+    writeCSVToFilestream(fout, *entries);
     fout.close();
 }
 
