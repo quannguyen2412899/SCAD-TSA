@@ -337,22 +337,36 @@ void Analysis::writeCSVToFilestream (ofstream& file, const vector<AnomalyEntry>&
 
 void Analysis::exportCSV(const string exportFile, char mode) const {
     ofstream fout;
-    const vector<AnomalyEntry> *entries;
-
-    if (mode == 'a') entries = &allEntries;
-    else if (mode == 'f') entries = &freqAnomalies;
-    else if (mode == 'l') entries = &lenAnomalies;
-    else if (mode == 'e') entries = &entropyAnomalies;
-    else cout << "[ERROR] Unsupported mode" << endl;
-
     fout.open(exportFile, ios::trunc);
     if (!fout.is_open()) {
         cout << "[ERROR] Failed to export anomalies to " << exportFile << endl;
         return;
     }
+    string type;
+    const vector<AnomalyEntry> *entries = nullptr;
+
+    if (mode == 'a') {
+        entries = &allEntries;
+        type = "All entries";
+    }
+    else if (mode == 'f') {
+        entries = &freqAnomalies;
+        type = "Frequency anomalies";
+    }
+    else if (mode == 'l') {
+        entries = &lenAnomalies;
+        type = "Length anomalies";
+    }
+    else if (mode == 'e') {
+        entries = &entropyAnomalies;
+        type = "Entropy anomalies";
+    }
+    else cout << "[ERROR] Unsupported mode" << endl;
 
     writeCSVToFilestream(fout, *entries);
     fout.close();
+
+    cout << type << " are exported to: " << exportFile << endl;
 }
 
 
@@ -446,4 +460,6 @@ void Analysis::exportReport(const string exportFile) const {
          << "\n\n======================= END OF REPORT =============================";
 
     file.close();
+
+    cout << "Report is saved at: " << exportFile << endl;
 }

@@ -240,6 +240,8 @@ void StatTrie::exportPartialJSON(const string exportFile, const unordered_set<co
     j["root"]["label"] = "root";
     file << j.dump(2);
     file.close();
+
+    cout << "Exported to: " << exportFile << endl;
 }
 
 
@@ -279,4 +281,6 @@ void StatTrie::exportAllJSON(const string exportFile, const unordered_set<const 
     j["root"]["label"] = "root";
     file << j;
     file.close();
+
+    cout << "JSON exported to: " << exportFile << endl;
 }
