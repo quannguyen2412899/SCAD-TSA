@@ -47,7 +47,7 @@ def add_nodes_and_edges(node_data: NodeData, parent_id: str = None, edge_char: s
         add_nodes_and_edges(child_node_data, current_id, char_key)
 
 
-def visualize_json_trie(input_path: str, output_path: str):
+def visualize_json_trie(input_path: str, output_path: str, fmt: str):
     try:
         with open(input_path, 'r', encoding='utf-8') as f:
             data = json.load(f)
@@ -71,13 +71,16 @@ def visualize_json_trie(input_path: str, output_path: str):
     # Render the file
     try:
         # Use cleanup=True to remove the intermediate .dot file
-        dot.render(output_path, view=True, format='png', cleanup=True)
-        print(f"\nVisualization completed. File saved at: {output_path}.png")
+        dot.render(output_path, view=False, format=fmt, cleanup=True)
+        print(f"Visualization saved at: {output_path+'.'+fmt}")
     except Exception as e:
         print(f"Error rendering the graph (Ensure Graphviz core tools are installed): {e}")
 
 
 
 if __name__ == "__main__":
-    root, old_ext = os.path.splitext(sys.argv[1])
-    visualize_json_trie(sys.argv[1], root)
+    intputFile = sys.argv[1]
+    outputFile = sys.argv[2]
+    outputName, format = os.path.splitext(outputFile)
+    format = format[1:]
+    visualize_json_trie(intputFile, outputName, format)
