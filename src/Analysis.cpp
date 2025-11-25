@@ -342,31 +342,26 @@ void Analysis::exportCSV(const string exportFile, char mode) const {
         cout << "[ERROR] Failed to export anomalies to " << exportFile << endl;
         return;
     }
-    string type;
     const vector<AnomalyEntry> *entries = nullptr;
 
     if (mode == 'a') {
         entries = &allEntries;
-        type = "All entries";
     }
     else if (mode == 'f') {
         entries = &freqAnomalies;
-        type = "Frequency anomalies";
     }
     else if (mode == 'l') {
         entries = &lenAnomalies;
-        type = "Length anomalies";
     }
     else if (mode == 'e') {
         entries = &entropyAnomalies;
-        type = "Entropy anomalies";
     }
     else cout << "[ERROR] Unsupported mode" << endl;
 
     writeCSVToFilestream(fout, *entries);
     fout.close();
 
-    cout << type << " are exported to: " << exportFile << endl;
+    cout << "CSV is saved at: " << exportFile << endl;
 }
 
 

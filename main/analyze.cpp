@@ -12,10 +12,10 @@ int main(int argc, char *argv[]) {
         printHelp();
         return 0;
     }
-    else if (argc == 2) {
-        cout << "[ERROR] Not enough arguments\nRun 'analyze --help' for usage info" << endl;
-        return 1;
-    }
+    // else if (argc == 2) {
+    //     cout << "[ERROR] Not enough arguments\nRun 'analyze --help' for usage info" << endl;
+    //     return 1;
+    // }
 
     if (argc < 3) {
         cout << "[ERROR] Expect: analyze <input_file> <output_dir> [flags]\nRun 'analyze --help' for usage info" << endl;
@@ -95,7 +95,7 @@ int main(int argc, char *argv[]) {
     a.exportCSV(outputDir+"/entropy_anomalies.csv", 'e');
 
 
-    if (!jsonTargets.empty()) cout << "\nJSON files:\n";
+    // if (!jsonTargets.empty()) cout << "\nJSON files:\n";
     // json
     unordered_set<const Node*> allAbnormalNodes;
     unordered_set<const Node*> freqAbnormalNodes;

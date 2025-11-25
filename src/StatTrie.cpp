@@ -241,7 +241,7 @@ void StatTrie::exportPartialJSON(const string exportFile, const unordered_set<co
     file << j.dump(2);
     file.close();
 
-    cout << "Exported to: " << exportFile << endl;
+    cout << "JSON is saved at: " << exportFile << endl;
 }
 
 
@@ -282,5 +282,5 @@ void StatTrie::exportAllJSON(const string exportFile, const unordered_set<const 
     file << j;
     file.close();
 
-    cout << "JSON exported to: " << exportFile << endl;
+    cout << "JSON is saved at: " << exportFile << endl;
 }
