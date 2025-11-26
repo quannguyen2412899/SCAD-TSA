@@ -74,7 +74,7 @@ def visualize_json_trie(input_path: str, output_path: str, fmt: str):
         dot.render(output_path, view=False, format=fmt, cleanup=True)
         print(f"Visualization saved at: {output_path+'.'+fmt}")
     except Exception as e:
-        print(f"Error rendering the graph (Ensure Graphviz core tools are installed): {e}")
+        print(f"Error rendering the graph:\n{e}")
 
 
 

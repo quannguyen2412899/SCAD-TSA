@@ -162,7 +162,7 @@ void Analysis::markAnomalyNodes(unordered_set<const Node*> &anomalyNodes, const 
     else if (mode == 'l') anomalies = &lenAnomalies;
     else if (mode == 'e') anomalies = &entropyAnomalies;
     else {
-        cout << "[ERROR] Unsupported mode: " << mode << endl;
+        cerr << "[ERROR] Unsupported mode: " << mode << endl;
         return;
     }
     
@@ -339,7 +339,7 @@ void Analysis::exportCSV(const string exportFile, char mode) const {
     ofstream fout;
     fout.open(exportFile, ios::trunc);
     if (!fout.is_open()) {
-        cout << "[ERROR] Failed to export anomalies to " << exportFile << endl;
+        cerr << "[ERROR] Failed to export anomalies to " << exportFile << endl;
         return;
     }
     const vector<AnomalyEntry> *entries = nullptr;
@@ -356,7 +356,7 @@ void Analysis::exportCSV(const string exportFile, char mode) const {
     else if (mode == 'e') {
         entries = &entropyAnomalies;
     }
-    else cout << "[ERROR] Unsupported mode" << endl;
+    else cerr << "[ERROR] Unsupported mode" << endl;
 
     writeCSVToFilestream(fout, *entries);
     fout.close();
@@ -393,7 +393,7 @@ void Analysis::exportReport(const string exportFile) const {
 
     ofstream file (exportFile, ios::trunc);
     if (!file.is_open()) {
-        cout << "Failed to open report file " << exportFile << endl;
+        cerr << "[ERROR] Failed to open report file " << exportFile << endl;
         return;
     }
 

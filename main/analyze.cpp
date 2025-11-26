@@ -12,14 +12,10 @@ int main(int argc, char *argv[]) {
         printHelp();
         return 0;
     }
-    // else if (argc == 2) {
-    //     cout << "[ERROR] Not enough arguments\nRun 'analyze --help' for usage info" << endl;
-    //     return 1;
-    // }
 
     if (argc < 3) {
-        cout << "[ERROR] Expect: analyze <input_file> <output_dir> [flags]\nRun 'analyze --help' for usage info" << endl;
-        return 0;
+        cerr << "[ERROR] Expect: analyze <input_file> <output_dir> [flags]\nRun 'analyze --help' for usage info" << endl;
+        return 1;
     }
 
     string inputFile = argv[1];
@@ -27,17 +23,17 @@ int main(int argc, char *argv[]) {
 
     /* Check paths' existence */
     if (!filesystem::exists(inputFile)) {
-        cout << "[ERROR] Input file '" <<  inputFile << "' does not exist" << endl;
+        cerr << "[ERROR] Input file '" <<  inputFile << "' does not exist" << endl;
         return 1;
     }
     if (!filesystem::exists(outputDir)) {
-        cout << "[ERROR] Output directory '" << outputDir << "' does not exist" << endl;
+        cerr << "[ERROR] Output directory '" << outputDir << "' does not exist" << endl;
         return 1;
     }
 
     ifstream fin (inputFile);
     if (!fin.is_open()) {
-        cout << "[ERROR] Cannot open input file at '" << inputFile << "'\n";
+        cerr << "[ERROR] Cannot open input file at '" << inputFile << "'\n";
         return 1;
     }
 
@@ -58,17 +54,17 @@ int main(int argc, char *argv[]) {
             flag == "--json-entropy") 
         {
             if (jsonTargets.count(flag)) {
-                cout << "[ERROR] Duplicate flag: " << flag << "\nRun 'analyze --help' for usage info" << endl;
+                cerr << "[ERROR] Duplicate flag: " << flag << "\nRun 'analyze --help' for usage info" << endl;
                 return 1;
             }
             if (path.empty()) {
-                cout << "[ERROR] Missing output path for flag: " << flag << "\nRun 'analyze --help' for usage info\n";
+                cerr << "[ERROR] Missing output path for flag: " << flag << "\nRun 'analyze --help' for usage info\n";
                 return 1;
             }
             jsonTargets[flag] = path;
         }
         else {
-            cout << "[ERROR] Invalid flag: " << flag << "\nRun 'analyze --help' for usage info\n";
+            cerr << "[ERROR] Invalid flag: " << flag << "\nRun 'analyze --help' for usage info\n";
             return 1;
         }
     }
@@ -93,40 +89,32 @@ int main(int argc, char *argv[]) {
     a.exportCSV(outputDir+"/frequency_anomalies.csv", 'f');
     a.exportCSV(outputDir+"/length_anomalies.csv", 'l');
     a.exportCSV(outputDir+"/entropy_anomalies.csv", 'e');
-
-
-    // if (!jsonTargets.empty()) cout << "\nJSON files:\n";
-    // json
-    unordered_set<const Node*> allAbnormalNodes;
-    unordered_set<const Node*> freqAbnormalNodes;
-    unordered_set<const Node*> lengthAbnormalNodes;
-    unordered_set<const Node*> entropyAbnormalNodes;
+    
     if (jsonTargets.count("--json-complete")) {
-        allAbnormalNodes.clear();
+        unordered_set<const Node*> allAbnormalNodes;
         a.markAnomalyNodes(allAbnormalNodes);
         trie.exportAllJSON(jsonTargets["--json-complete"], allAbnormalNodes);
     }
     if (jsonTargets.count("--json-partial")) {
-        allAbnormalNodes.clear();
+        unordered_set<const Node*> allAbnormalNodes;
         a.markAnomalyNodes(allAbnormalNodes);
         trie.exportPartialJSON(jsonTargets["--json-partial"], allAbnormalNodes);
     }
     if (jsonTargets.count("--json-freq")) {
-        freqAbnormalNodes.clear();
+        unordered_set<const Node*> freqAbnormalNodes;
         a.markAnomalyNodes(freqAbnormalNodes, 'f');
         trie.exportPartialJSON(jsonTargets["--json-freq"], freqAbnormalNodes);
     }
     if (jsonTargets.count("--json-len")) {
-        lengthAbnormalNodes.clear();
+        unordered_set<const Node*> lengthAbnormalNodes;
         a.markAnomalyNodes(lengthAbnormalNodes, 'l');
         trie.exportPartialJSON(jsonTargets["--json-len"], lengthAbnormalNodes);
     }
     if (jsonTargets.count("--json-entropy")) {
-        entropyAbnormalNodes.clear();
+        unordered_set<const Node*> entropyAbnormalNodes;
         a.markAnomalyNodes(entropyAbnormalNodes, 'e');
         trie.exportPartialJSON(jsonTargets["--json-entropy"], entropyAbnormalNodes);
     }
-
 
     return 0;
 }

@@ -230,7 +230,7 @@ json StatTrie::toPartialJSON(const Node* root, const unordered_set<const Node*> 
 void StatTrie::exportPartialJSON(const string exportFile, const unordered_set<const Node*> &trimNodes) const {
     ofstream file (exportFile, ios::trunc);
     if (!file.is_open()) {
-        cout << "[ERROR] Cannot open " << exportFile << " to export JSON" << endl;
+        cerr << "[ERROR] Cannot open " << exportFile << " to export JSON" << endl;
         return;
     }
     unsigned id = 0;
@@ -272,7 +272,7 @@ json StatTrie::toJSON(const Node* root, const unordered_set<const Node*> &anomal
 void StatTrie::exportAllJSON(const string exportFile, const unordered_set<const Node*> &anomalyNodes) const {
     ofstream file (exportFile, ios::trunc);
     if (!file.is_open()) {
-        cout << "[ERROR] Cannot open " << exportFile << " to export JSON" << endl;
+        cerr << "[ERROR] Cannot open " << exportFile << " to export JSON" << endl;
         return;
     }
     unsigned id = 0;
