@@ -71,7 +71,7 @@ private:
 
     public:
 
-    Analysis(double freqPercentile = 5, double lenPercentile = 95, double entropyPercentile = 5);
+    Analysis(double freqPercentile = 5, double lenPercentile = 5, double entropyPercentile = 95);
 
     void collectStatistics(const StatTrie* _trie);
     void markAnomalyNodes(std::unordered_set<const Node*> &anomalyNodes, const char mode = 'a') const;

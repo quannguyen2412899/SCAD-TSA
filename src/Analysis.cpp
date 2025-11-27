@@ -5,7 +5,7 @@ using json = nlohmann::json;
 
 /* ==================== Constructor ==================== */
 
-Analysis::Analysis(double freqPercentile, double entropyPercentile, double lenPercentile) : 
+Analysis::Analysis(double freqPercentile, double lenPercentile, double entropyPercentile) : 
     // trie(trie),
     freqPercentile(freqPercentile), entropyPercentile(entropyPercentile), lenPercentile(lenPercentile),
     freqThreshold(0), entropyThreshold(0), lenFreqThreshold(0),
