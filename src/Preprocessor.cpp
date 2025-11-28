@@ -29,7 +29,6 @@ void Preprocessor::setDelimiters(const std::string& chars) {
 }
 
 
-// XÓA KHOẢNG TRẮNG THỪA
 std::string Preprocessor::normalizeWhitespace(const std::string& s) const {
     std::string out;
     bool lastSpace = false;
@@ -130,7 +129,6 @@ std::vector<std::string> Preprocessor::filterByRegex(
         return results;
     }
 
-    // 1. Compile regex
     std::regex re;
     try {
         re.assign(pattern);
@@ -143,14 +141,10 @@ std::vector<std::string> Preprocessor::filterByRegex(
     while (std::getline(fin, line)) {
         std::smatch match;
 
-        // Iterate all matches in line
         auto it = line.cbegin();
         while (std::regex_search(it, line.cend(), match, re)) {
-            
-            // Main logic: check number of matched elements (including match[0])
-            // match.size() > 1 means capture groups exist
+
             if (match.size() > 1) {
-                // Has capture groups → write only the groups
                 for (size_t i = 1; i < match.size(); i++) {
                     std::string cap = match[i].str();
                     if (!cap.empty()) {
@@ -159,7 +153,6 @@ std::vector<std::string> Preprocessor::filterByRegex(
                     }
                 }
             } else {
-                // No capture group → write full match
                 std::string full = match[0].str();
                 if (!full.empty()) {
                     fout << full << "\n";
@@ -167,7 +160,6 @@ std::vector<std::string> Preprocessor::filterByRegex(
                 }
             }
 
-            // Continue to next match
             it = match.suffix().first;
         }
     }
