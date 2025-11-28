@@ -5,10 +5,9 @@
 
 using namespace std;
 
-// Hàm để hiển thị thông báo sử dụng
 void displayUsage() {
     std::cerr << "Usage:\n";
-    std::cerr << "  ./main <input file> <output file> [flags]\n\n";
+    std::cerr << "  ./preprocess <input file> <output file> [flags]\n\n";
     std::cerr << "Flags:\n";
     std::cerr << "  --regex=<pattern>       : filter using regex \n";
     std::cerr << "  --ignore=<chars>        : characters to ignore\n";
@@ -28,7 +27,6 @@ int main(int argc, char** argv) {
     }
 
     if (argc < 3) {
-        std::cerr << "Error: Missing input and/or output file.\n";
         displayUsage();
         return 1;
     }
@@ -59,23 +57,22 @@ int main(int argc, char** argv) {
     Preprocessor pp(true);
 
     if (!regexPattern.empty()) {
-        std::cout << "  + Filtering by regex: " << regexPattern << "\n";
         vector<string> cleaned = pp.filterByRegex(inputFile,  regexPattern);
         pp.exportCollected(outputFile, cleaned);
+        cout << "Cleaned data exported to " << outputFile << endl;
         return 0;
     }
 
 
     if (!ignoreChars.empty()) {
-        std::cout << "  + Ignore characters: " << ignoreChars << "\n";
         pp.setIgnoredCharacters(ignoreChars);
     }
 
     if (!delimChars.empty()) {
-        std::cout << "  + Delimiter characters: " << delimChars << "\n";
         pp.setDelimiters(delimChars);
     }
 
     pp.processFile(inputFile, outputFile);
+    cout << "Cleaned data exported to " << outputFile << endl;
     return 0;
 }

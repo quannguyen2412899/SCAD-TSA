@@ -11,9 +11,6 @@
 
 Preprocessor::Preprocessor(bool toLower)
     : toLower(toLower) {
-    // Bỏ các ký tự nhiễu phổ biến trong log
-    ignoredChars = {'\r', '[', ']', '{', '}', '"', '\'', '(', ')'};
-    delimiters = {'\n'};
 }
 
 void Preprocessor::setIgnoredCharacters(const std::string& chars) {
@@ -116,10 +113,6 @@ std::vector<std::string> Preprocessor::processFile(
     if (fout.is_open()) {
         fout.close();
     }
-
-    std::cout << "Processing completed: " << sequences.size()
-              << " sequences from " << lineCount << " lines.\n";
-
     return sequences;
 }
 
@@ -172,7 +165,8 @@ std::vector<std::string> Preprocessor::filterByRegex(
 }
 
 void Preprocessor::exportCollected(const std::string& outputFile, vector<string> collected) {
-    ofstream fout(outputFile);
+    
+    ofstream fout(outputFile, ios::trunc | ios::binary);
     if (!fout.is_open()) return;
 
 
@@ -184,6 +178,5 @@ void Preprocessor::exportCollected(const std::string& outputFile, vector<string>
     }
 
     fout.close();
-    cout << "Collected data exported to " << outputFile << endl;
     return ;
 }
