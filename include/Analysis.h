@@ -2,47 +2,86 @@
 #define _ANALYSIS_
 
 #include "StatTrie.h"
-#include <vector>
-#include <string>
-#include <fstream>
-#include <cmath>
-#include <functional>
-#include <iostream>
-#include <iomanip>
-#include <queue>
-#include <nlohmann/json.hpp>
-using json = nlohmann::json;
-using namespace std;
+
+
+struct AnomalyEntry {
+    std::string word;
+    unsigned count;
+    double freqRate;
+    double entropy;
+    unsigned depth;
+    double score; // tổng hợp multi-metric
+    bool isWord;
+};
+
 
 /**
- * @brief Class phân tích thống kê cây Trie:
- *  - Tận dụng hàm traverse() của StatTrie
- *  - Tính toán entropy, độ sâu, tỷ lệ anomaly
- *  - Phát hiện và xuất danh sách các chuỗi bất thường
- */
+ * @brief
+ * How to use:
+
+Ananlys a();
+a.collectStatistics(trie);
+a.report();
+*/
 class Analysis {
+
 private:
-    const StatTrie& trie; // Trie được phân tích
 
-    // Helpers
-    double totalWords() const;
-    void writeHeader(ofstream& fout) const;
-
-public:
-    friend class StatTrie;
-    explicit Analysis(const StatTrie& trie);
-
-    double computeAverageDepth() const;
-    double computeAverageBranchingFactor() const;
-    double computeAnomalyRatio() const;
-
-    // ===== Detection =====
-    vector<string> detectAnomalies() const;
-
-    // ===== Reporting =====
-    void generateReport(const string& filename = "analysis_report.txt") const;
+    const StatTrie* trie;
+    // unordered_set<const StatTrie::Node*> anomalyNodes;
+    std::vector<AnomalyEntry> allEntries;
+    std::vector<AnomalyEntry> freqAnomalies;
+    std::vector<AnomalyEntry> lenAnomalies;
+    std::vector<AnomalyEntry> entropyAnomalies;
     
-    void exportJSON(const string exportPath = "data/trie.json");
+    double freqPercentile;
+    double entropyPercentile;
+    double lenPercentile;
+
+    double freqThreshold;
+    double entropyThreshold;
+    double lenFreqThreshold;
+    
+    unsigned totalInsertedWords;
+    unsigned totalUniqueWords;
+    unsigned totalNodes;
+    unsigned totalUniqueWordChar;
+    
+    unsigned maxFreq;
+    unsigned minFreq;
+    unsigned maxDepth;
+    unsigned minDepth;
+    double maxEntropy;
+    double minEntropy;
+    std::unordered_map<unsigned, unsigned> lenFreq;
+
+    double freqAnomaliesRate;
+    double lenAnomaliesRate;
+    double entropyAnomaliesRate;
+    
+    double computeLocalEntropy(const Node* node);
+    void computePercentileThresholds();
+    void getExtremum();
+    void detectAnomalies();
+
+    std::string escapeCSV(const std::string& s) const;
+    void writeCSVToFilestream (std::ofstream& file, const std::vector<AnomalyEntry>& anomalies) const;
+    // void exportJSON(const StatTrie &_trie, const string exportFile = "data/output/trie.json") const;
+
+
+    public:
+
+    Analysis(double freqPercentile = 5, double lenPercentile = 5, double entropyPercentile = 95);
+
+    void collectStatistics(const StatTrie* _trie);
+    void markAnomalyNodes(std::unordered_set<const Node*> &anomalyNodes, const char mode = 'a') const;
+
+    // xuất report, json, csv
+    // void report(const std::string directory = "data/output") const;
+    void exportReport(const std::string exportFile = "data/output/overall_report.txt") const;
+    void exportCSV(const std::string exportFile = "data/output/all_entries.csv", char mode = 'a') const;
+
+    // void exportAnomaliesToCSV(const std::string exportFile = "data/output") const;
 };
 
 #endif
