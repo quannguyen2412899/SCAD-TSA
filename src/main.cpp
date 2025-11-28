@@ -5,15 +5,31 @@
 
 using namespace std;
 
+// Hàm để hiển thị thông báo sử dụng
+void displayUsage() {
+    std::cerr << "Usage:\n";
+    std::cerr << "  ./main <input file> <output file> [flags]\n\n";
+    std::cerr << "Flags:\n";
+    std::cerr << "  --regex=<pattern>       : filter using regex \n";
+    std::cerr << "  --ignore=<chars>        : characters to ignore\n";
+    std::cerr << "  --delim=<chars>         : delimiter characters\n";
+    std::cerr << "  --help                  : display this help message\n";
+}
+
 int main(int argc, char** argv) {
     cout << "========== Preprocess ==========" << endl;
+
+    for (int i = 1; i < argc; ++i) {
+        std::string arg = argv[i];
+        if (arg == "--help") {
+            displayUsage();
+            return 0; 
+        }
+    }
+
     if (argc < 3) {
-        std::cerr << "Usage:\n";
-        std::cerr << "  preprocess <input file> <output file> [flags]\n\n";
-        std::cerr << "Flags:\n";
-        std::cerr << "  --regex=<pattern>       : filter using regex \n";
-        std::cerr << "  --ignore=<chars>        : characters to ignore\n";
-        std::cerr << "  --delim=<chars>         : delimiter characters\n";
+        std::cerr << "Error: Missing input and/or output file.\n";
+        displayUsage();
         return 1;
     }
 
@@ -42,12 +58,12 @@ int main(int argc, char** argv) {
 
     Preprocessor pp(true);
 
-
     if (!regexPattern.empty()) {
-        pp.filterByRegex(inputFile, outputFile, regexPattern);
+        std::cout << "  + Filtering by regex: " << regexPattern << "\n";
+        vector<string> cleaned = pp.filterByRegex(inputFile,  regexPattern);
+        pp.exportCollected(outputFile, cleaned);
         return 0;
     }
-
 
 
     if (!ignoreChars.empty()) {

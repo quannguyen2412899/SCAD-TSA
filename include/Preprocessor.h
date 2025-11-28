@@ -1,5 +1,3 @@
-
-// Preprocessor.h
 #ifndef PREPROCESSOR_H
 #define PREPROCESSOR_H
 
@@ -8,36 +6,37 @@
 #include <unordered_set>
 #include <unordered_map>
 #include <regex>
+using namespace std;    
 
 class Preprocessor {
 private:
     bool toLower;
-    std::unordered_set<char> ignoredChars;
-    std::unordered_set<char> delimiters;
+    unordered_set<char> ignoredChars;
+    unordered_set<char> delimiters;
 
-
-    std::string normalizeWhitespace(const std::string& s) const;
+    string normalizeWhitespace(const string& s) const;
 
 public:
     Preprocessor(bool toLower = true);
 
-    void setIgnoredCharacters(const std::string& chars);
-    void setDelimiters(const std::string& chars);
+    void setIgnoredCharacters(const string& chars);
+    void setDelimiters(const string& chars);
 
-    std::string cleanLine(const std::string& line) const;
+    string cleanLine(const string& line) const;
     
-    // Xử lý file → trả về danh sách chuỗi sạch (đã bỏ timestamp)
-    std::vector<std::string> processFile(
-        const std::string& inputFile,
-        const std::string& outputFile = ""
+    vector<string> processFile(
+        const string& inputFile,
+        const string& outputFile = ""
     );
     
 
-    std::vector<std::string> filterByRegex(
-        const std::string& inputFile,
-        const std::string& outputFile,
-        const std::string& pattern
+    vector<string> filterByRegex(
+        const string& inputFile,
+        const string& pattern
     );
+
+    void exportCollected(const string& outputFile, vector<string> data); 
+
 };
 
 #endif
