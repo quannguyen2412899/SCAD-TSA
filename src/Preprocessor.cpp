@@ -1,180 +1,180 @@
 #include "../include/Preprocessor.h"
+
+// Preprocessor.cpp
+#include "../include/Preprocessor.h"
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <unordered_set>
+#include <regex>
 #include <cctype>
-#include <sstream>
 
-// ===================== Constructor =====================
-Preprocessor::Preprocessor(bool toLower, bool chunking, size_t chunkSize) {
-    this->toLower = toLower;
-    this->chunking = chunking;
-    this->chunkSize = chunkSize;
-    this->ignoredChars.insert('\r');    // default ignore
-    this->delimiters.insert('\n');      // default delim
+Preprocessor::Preprocessor(bool toLower)
+    : toLower(toLower) {
+    // Bỏ các ký tự nhiễu phổ biến trong log
+    ignoredChars = {'\r', '[', ']', '{', '}', '"', '\'', '(', ')'};
+    delimiters = {'\n'};
 }
 
-// ===================== Setup methods =====================
-void Preprocessor::setIgnoredCharacters(const string chars) {
-    if (toLower)
-        for (char c : chars) ignoredChars.insert((char)tolower(c));
-    else
-        for (char c : chars) ignoredChars.insert(c);
+void Preprocessor::setIgnoredCharacters(const std::string& chars) {
+    for (char c : chars) {
+        ignoredChars.insert(toLower ? (char)std::tolower(c) : c);
+    }
 }
 
-void Preprocessor::setDelimiters(const string chars) {
-    if (toLower)
-        for (char c : chars) delimiters.insert((char)tolower(c));
-    else
-        for (char c : chars) delimiters.insert(c);
+void Preprocessor::setDelimiters(const std::string& chars) {
+    for (char c : chars) {
+        delimiters.insert(toLower ? (char)std::tolower(c) : c);
+    }
 }
 
-// ===================== Utility =====================
 
-string Preprocessor::cleanLine(const string& line) const {
-    string result;
-    if (toLower) {
-        for (char c : line) {
-            // lower & split & ignore
-            c = (char)tolower(c);
-            if (delimiters.count(c)) c = '\n';
-            else if (ignoredChars.count(c)) continue;
-            if (result.empty() && c == '\n') continue;
-            if (result.size() > 0 && result.back() == '\n' && c == '\n') continue;
-            result.push_back(c);
+// XÓA KHOẢNG TRẮNG THỪA
+std::string Preprocessor::normalizeWhitespace(const std::string& s) const {
+    std::string out;
+    bool lastSpace = false;
+    for (char c : s) {
+        if (c == ' ') {
+            if (!lastSpace) out += ' ';
+            lastSpace = true;
+        } else {
+            out += c;
+            lastSpace = false;
         }
     }
-    else {
-        for (char c : line) {
-            if (delimiters.count(c)) c = '\n';
-            else if (ignoredChars.count(c)) continue;
-            if (result.empty() && c == '\n') continue;
-            if (result.size() > 0 && result.back() == '\n' && c == '\n') continue;
-            result.push_back(c);
+    if (!out.empty() && out.front() == ' ') out.erase(0, 1);
+    if (!out.empty() && out.back() == ' ') out.pop_back();
+    return out;
+}
+
+std::string Preprocessor::cleanLine(const std::string& line) const {
+    std::string result;
+
+    for (char c : line) {
+        char processed = toLower ? (char)std::tolower(c) : c;
+
+        if (ignoredChars.count(processed)) continue;
+        if (delimiters.count(processed)) processed = '\n';
+
+        if (processed == '\n') {
+            if (!result.empty() && result.back() == '\n') continue;
         }
+
+        result += processed;
     }
+
+    result = normalizeWhitespace(result);
+
     return result;
 }
+std::vector<std::string> Preprocessor::processFile(
+    const std::string& inputFile,
+    const std::string& outputFile
+) {
 
-void Preprocessor::splitLine(string& line) const {
-    for (char &c : line) {
-        if (delimiters.count(c)) c = '\n';
-    }
-}
-
-vector<string> Preprocessor::chunkString(const string& s, size_t k) {
-    vector<string> chunks;
-    if (s.empty()) return chunks;
-    if (s.size() <= k) { chunks.push_back(s); return chunks; }
-
-    for (size_t i = 0; i + k <= s.size(); ++i)
-        chunks.push_back(s.substr(i, k));
-    return chunks;
-}
-
-
-// ===================== Main processing =====================
-
-void Preprocessor::run(const string file_in, const string file_out) {
-
-    cout << "Processing data from: " << file_in << endl;
-
-    // file_in = empty string
-    if (file_in.empty()) {
-        cerr << "[ERROR] No input file determined.";
-        return;
-    }
-    ifstream fin (file_in);
+    std::ifstream fin(inputFile);
     if (!fin.is_open()) {
-        cerr << "[ERROR] Cannot open input file: " << file_in << endl;
-        return;
-    }
-    ofstream fout (file_out, ios::trunc | ios::binary);
-    if (!fout.is_open()) {
-        cerr << "[ERROR] Error while opening ouput file: " << file_out << endl;
-        return;
+        return {};
     }
 
-    string line;
-    if (chunking) {
-        // chunking ??
+    std::ofstream fout;
+    if (!outputFile.empty()) {
+        fout.open(outputFile);
+        if (!fout.is_open()) {
+            fin.close();
+            return {};
+        }
     }
-    else {
-        while (getline(fin, line)) {
-            line = cleanLine(line);
+
+    std::vector<std::string> sequences;
+    std::string line;
+    int lineCount = 0;
+
+    while (std::getline(fin, line)) {
+        line = cleanLine(line);
+        if (line.empty()) continue;
+
+        ++lineCount;
+        sequences.push_back(line);
+
+        if (fout.is_open()) {
             fout << line << '\n';
         }
     }
 
-    cout << "Cleaned data is written to: " << file_out << endl;
+    fin.close();
+    if (fout.is_open()) {
+        fout.close();
+    }
 
+    std::cout << "Processing completed: " << sequences.size()
+              << " sequences from " << lineCount << " lines.\n";
+
+    return sequences;
 }
 
+std::vector<std::string> Preprocessor::filterByRegex(
+    const std::string& inputFile,
+    const std::string& outputFile,
+    const std::string& pattern
+) {
+    std::vector<std::string> results;
 
-// void Preprocessor::run(DataType datatype) {
-//     ifstream fin(filename);
-//     if (!fin.is_open()) {
-//         cerr << "[ERROR] Cannot open file: " << filename << endl;
-//         return;
-//     }
+    std::ifstream fin(inputFile);
+    if (!fin.is_open()) {
+        return results;
+    }
 
-//     processedData.clear();
-//     string line;
-//     DataType dtype = datatype;
+    std::ofstream fout(outputFile);
+    if (!fout.is_open()) {
+        return results;
+    }
 
-//     // Nếu auto -> đoán loại dữ liệu
-//     if (dtype == DataType::AUTO) {
-//         if (getline(fin, line))
-//             dtype = detectDataType(line);
-//         else dtype = DataType::TEXT;
-//         fin.clear(); fin.seekg(0, ios::beg);
-//         cout << "[INFO] Auto-detected datatype: " << toString(dtype) << endl;
-//     }
+    // 1. Compile regex
+    std::regex re;
+    try {
+        re.assign(pattern);
+    } catch (const std::regex_error& e) {
+        return results;
+    }
+    
+    std::string line;
 
-//     size_t lineCount = 0;
-//     while (getline(fin, line)) {
-//         line = cleanLine(line, toLower, ignoredChars);
-//         if (line.empty()) continue;
-//         ++lineCount;
+    while (std::getline(fin, line)) {
+        std::smatch match;
 
-//         switch (dtype) {
-//             case DataType::TEXT: {
-//                 string sentence;
-//                 for (char c : line) {
-//                     if (delimiters.count(c)) {
-//                         if (!sentence.empty()) {
-//                             if (chunking)
-//                                 for (auto& s : chunkString(sentence, chunkSize))
-//                                     processedData.push_back(s);
-//                             else processedData.push_back(sentence);
-//                             sentence.clear();
-//                         }
-//                     } else sentence += c;
-//                 }
-//                 if (!sentence.empty()) processedData.push_back(sentence);
-//                 break;
-//             }
+        // Iterate all matches in line
+        auto it = line.cbegin();
+        while (std::regex_search(it, line.cend(), match, re)) {
+            
+            // Main logic: check number of matched elements (including match[0])
+            // match.size() > 1 means capture groups exist
+            if (match.size() > 1) {
+                // Has capture groups → write only the groups
+                for (size_t i = 1; i < match.size(); i++) {
+                    std::string cap = match[i].str();
+                    if (!cap.empty()) {
+                        fout << cap << "\n";
+                        results.push_back(cap);
+                    }
+                }
+            } else {
+                // No capture group → write full match
+                std::string full = match[0].str();
+                if (!full.empty()) {
+                    fout << full << "\n";
+                    results.push_back(full);
+                }
+            }
 
-//             case DataType::LOG:
-//             case DataType::DNA: {
-//                 if (chunking)
-//                     for (auto& s : chunkString(line, chunkSize))
-//                         processedData.push_back(s);
-//                 else processedData.push_back(line);
-//                 break;
-//             }
+            // Continue to next match
+            it = match.suffix().first;
+        }
+    }
 
-//             case DataType::UNKNOWN:
-//             default: {
-//                 line = cleanLine(line, toLower, ignoredChars);
-//                 if (chunking)
-//                     for (auto& s : chunkString(line, chunkSize))
-//                         processedData.push_back(s);
-//                 else processedData.push_back(line);
-//                 cerr << "[WARN] Unknown data type detected. Processed generically." << endl;
-//                 break;
-//             }
-//         }
-//     }
+    fin.close();
+    fout.close();
+    std::cout << "Cleaned: " << outputFile << std::endl;
 
-//     fin.close();
-//     cout << "[INFO] Processed " << processedData.size()
-//          << " sequences from " << lineCount << " lines." << endl;
-// }
+    return results;
+}
