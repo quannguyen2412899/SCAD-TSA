@@ -16,7 +16,7 @@ int main(int argc, char* argv[]) {
         exit(EXIT_FAILURE);
     }
 
-    string command = "python3 src/visualize.py ";
+    string command = "python3 src/Visualize.py ";
     for (int i = 1; i < argc; ++i) {
         command += argv[i];
         if (i < argc - 1) {
