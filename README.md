@@ -75,7 +75,7 @@ Lệnh chạy cơ bản, thực hiện phân tích đầy đủ và xuất biể
 
 #### 1\. Cờ Tiền xử lý
 
-Các cờ này kiểm soát cách dữ liệu đầu vào được làm sạch và tách chuỗi.
+Các cờ này kiểm soát cách dữ liệu đầu vào được làm sạch và tách chuỗi bởi `bin/preprocess`.
 
   * **Mặc định:** `--delim`: `\n` (luôn bao gồm). `--ignore`: `\r` (luôn bao gồm).
   * **Ưu tiên:** Cờ `--regex` có **ưu tiên cao nhất**, ghi đè mọi thiết lập `delim`/`ignore` khác.
@@ -86,7 +86,18 @@ Các cờ này kiểm soát cách dữ liệu đầu vào được làm sạch v
 | **`--delim="<chars>"`** | Chuỗi ký tự phân cách. | `--delim=","` |
 | **`--ignore="<chars>"`** | Chuỗi ký tự cần loại bỏ khỏi chuỗi. | `--ignore=",.!?"` |
 
-#### 2\. Cờ Trực quan hóa
+#### 2\. Cờ Xử lý
+
+Cấu hình percentile đầu vào của `bin/analyze` để xác định ngưỡng bất thường.
+* **Mặc định:** `--perc-freq=5`, `--perc-len=5`, `--perc-entropy=95`
+
+| Flag | Mô tả | Ví dụ |
+| :--- | :--- | :--- |
+| **`--perc-freq=<val>`** | Cài đặt percentile để xác định ngưỡng bất thường **tần suất**. | `--perc-freq=1` |
+| **`--perc-len=<val>`** | Cài đặt percentile để xác định ngưỡng bất thường **độ dài**. | `--perc-len=1` |
+| **`--perc-entropy=<val>`** | Cài đặt percentile để xác định ngưỡng bất thường **entropy**. | `--perc-entropy=99` |
+
+#### 3\. Cờ Trực quan hóa
 
 Yêu cầu `bin/analyze` tạo ra file JSON, sau đó được `bin/visualize` chuyển đổi thành hình ảnh.
 
@@ -94,16 +105,32 @@ Yêu cầu `bin/analyze` tạo ra file JSON, sau đó được `bin/visualize` c
 | :--- | :--- | :--- |
 | **`--visual-complete`** | Xuất JSON và vẽ **toàn bộ** cây Trie. | `complete_trie.json`, `complete_trie.png` |
 | **`--visual-partial`** | **Khuyến nghị:** Xuất JSON và vẽ cây rút gọn (chỉ hiển thị các nhánh chứa bất thường). | `partial_trie.json`, `partial_trie.png` |
-| **`--visual-freq`** | Xuất JSON và vẽ chỉ các nhánh liên quan đến **Bất thường Tần suất**. | `freq_anomalies.json`, `freq_anomalies.png` |
-| **`--visual-len`** | Xuất JSON và vẽ chỉ các nhánh liên quan đến **Bất thường Độ dài**. | `len_anomalies.json`, `len_anomalies.png` |
+| **`--visual-freq`** | Xuất JSON và vẽ chỉ các nhánh liên quan đến **Bất thường Tần suất**. | `frequency_anomalies.json`, `frequency_anomalies.png` |
+| **`--visual-len`** | Xuất JSON và vẽ chỉ các nhánh liên quan đến **Bất thường Độ dài**. | `length_anomalies.json`, `length_anomalies.png` |
 | **`--visual-entropy`** | Xuất JSON và vẽ chỉ các nhánh liên quan đến **Bất thường Entropy**. | `entropy_anomalies.json`, `entropy_anomalies.png` |
 
 
 -----
+### 📋 Chi tiết các File Output
+Module **`bin/preprocess`** làm sạch file input và tạo ra file clean: `cleaned_data.txt`
+
+Module **`bin/analyze`** tạo ra các kết quả định lượng sau:
+* `overall_report.txt`: Báo cáo tóm tắt chứa các **ngưỡng bách phân vị (P5, P95)** được tính toán thực tế.
+* `all_entries.csv`: Bảng thống kê đầy đủ (Count, Length, Entropy) của TẤT CẢ các chuỗi/tiền tố duy nhất.
+* `frequency_anomalies.csv`: Danh sách các chuỗi bất thường về tần suất.
+* `length_anomalies.csv`: Danh sách các chuỗi bất thường về độ dài.
+* `entropy_anomalies.csv`: Danh sách các chuỗi bất thường về entropy.
+* `*.json` (nếu có flag trực quan): Các file chứa cấu trúc Trie đã được lọc/đánh dấu, dùng làm đầu vào cho module `visualize`.
+
+Module **`bin/visualize`** sẽ trực quan cây trie từ các file `*json`:
+
+---
+
+
 ## Chi tiết hệ thống
 ### ⚙️ Tóm tắt
 - Hệ thống sử dụng cấu trúc dữ liệu **Trie** để nén dữ liệu và áp dụng các đặc trưng thống kê như **tần suất**, **độ dài** và **entropy cục bộ** tại mỗi nút để xác định các chuỗi có cấu trúc hoặc hành vi **bất thường**.
-- Phương pháp phát hiện bất thường sử dụng kỹ thuật **phần vị**, đảm bảo tính vững chắc trước sự lệch của phân phối tần suất chuỗi.
+- Phương pháp phát hiện bất thường sử dụng kỹ thuật **bách phân vị (Percentile)**, đảm bảo tính vững chắc trước sự lệch của phân phối tần suất chuỗi.
 
 ### 💡 Ý tưởng Cốt lõi và Lợi ích của Trie
 Hệ thống sử dụng cấu trúc dữ liệu **Trie** với hai mục đích chính:
@@ -111,16 +138,16 @@ Hệ thống sử dụng cấu trúc dữ liệu **Trie** với hai mục đích
 - **Lưu trữ Thống kê Hiệu quả:** Mỗi nút (Node) trên Trie là một vị trí lý tưởng để lưu trữ các đặc trưng thống kê cục bộ (như **Tần suất**, **Độ dài**, **Entropy**) cần thiết cho việc phân tích nhánh.
 
 ### 🔬 Phương pháp Phát hiện Bất thường
-Thay vì sử dụng các chỉ số thống kê truyền thống như Mean/Standard Deviation (dễ bị ảnh hưởng bởi dữ liệu lệch), hệ thống áp dụng phương pháp **Phần vị (Percentile)** để xác định ngưỡng một cách vững chắc.
+Thay vì sử dụng các chỉ số thống kê truyền thống như Mean/Standard Deviation (dễ bị ảnh hưởng bởi dữ liệu lệch), hệ thống áp dụng phương pháp **bách phân vị** để xác định ngưỡng một cách vững chắc.
 
 Bất thường được xác định dựa trên ba tiêu chí chính:
 | Tiêu chí | Đặc trưng | Ngưỡng Quyết định | Giải thích |
 | :--- | :--- | :--- | :--- |
-| **Bất thường Tần suất** | Tần suất | **Thấp hơn P5** | Chuỗi hiếm, xuất hiện không đủ thường xuyên để được coi là mẫu chuẩn. |
-| **Bất thường Độ dài** | Tần suất độ dài | **Thấp hơn P5** | Chuỗi có độ dài hiếm, ít gặp trong phân phối tần suất độ dài chung. |
-| **Bất thường Entropy** | Entropy Cục bộ | **Cao hơn P95** | Node có sự phân nhánh quá mức, chỉ ra sự đa dạng ký tự bất thường trong chuỗi. |
+| **Bất thường Tần suất** | Tần suất | **≤ input percentile** | Chuỗi hiếm, xuất hiện không đủ thường xuyên để được coi là mẫu chuẩn. |
+| **Bất thường Độ dài** | Tần suất độ dài | **≤ input percentile** | Chuỗi có độ dài hiếm, ít gặp trong phân phối tần suất độ dài chung. |
+| **Bất thường Entropy** | Entropy Cục bộ | **≥ input percentile** | Node có sự phân nhánh quá mức, chỉ ra sự đa dạng ký tự bất thường trong chuỗi. |
 
-*Các giá trị P5 và P95 được tính dựa trên phân phối trọng số của toàn bộ dữ liệu, đảm bảo ngưỡng ổn định ngay cả khi dữ liệu đầu vào bị lệch mạnh.*
+*Các giá trị bách phân vị được tính dựa trên phân phối trọng số của toàn bộ dữ liệu, đảm bảo ngưỡng ổn định ngay cả khi dữ liệu đầu vào bị lệch mạnh.*
 
 
 ### 🏗️ Sơ đồ pipeline tổng thể
@@ -136,19 +163,7 @@ Hệ thống được thiết kế dưới dạng một chuỗi lệnh (pipeline
 | Executable | Chức năng Chính | Đầu vào | Đầu ra Chính |
 | :--- | :--- | :--- | :--- |
 | **`main_pipeline`** | **Điều phối** các module. | `<input_file>`, `<output_dir>` | Là các đầu ra của 3 module còn lại |
-| **`bin/preprocess`** | Chuẩn hóa, làm sạch chuỗi. | `<input_file>` | `cleaned_input_text.txt` |
-| **`bin/analyze`** | Xây dựng Trie, tính toán Phần vị, đánh dấu bất thường, xuất báo cáo. | `cleaned_input_text.txt` | `overall_report.txt`<br>`all_entries.csv`<br>`frequency_anomalies.csv`<br> `length_anomalies.csv` <br> `entropy_anomalies.csv` <br>`*.json` |
+| **`bin/preprocess`** | Chuẩn hóa, làm sạch chuỗi. | `<input_file>` | `cleaned_data.txt` |
+| **`bin/analyze`** | Xây dựng Trie, tính toán bách phân vị, đánh dấu bất thường, xuất báo cáo. | `cleaned_data.txt` | `overall_report.txt`<br>`all_entries.csv`<br>`frequency_anomalies.csv`<br> `length_anomalies.csv` <br> `entropy_anomalies.csv` <br>`*.json` |
 | **`bin/visualize`** | Wrapper C++ gọi script Python để vẽ trie. | `*.json` | `*.png` |
-
-### 📋 Chi tiết các File Output Quan trọng
-
-Module **`bin/analyze`** tạo ra các kết quả định lượng sau:
-* `overall_report.txt`: Báo cáo tóm tắt chứa các **ngưỡng Phần vị (P5, P95)** được tính toán thực tế.
-* `all_entries.csv`: Bảng thống kê đầy đủ (Count, Length, Entropy) của TẤT CẢ các chuỗi/tiền tố duy nhất.
-* `frequency_anomalies.csv`: Danh sách các chuỗi bất thường về tần suất.
-* `length_anomalies.csv`: Danh sách các chuỗi bất thường về độ dài.
-* `entropy_anomalies.csv`: Danh sách các chuỗi bất thường về entropy.
-* `*.json`: Các file chứa cấu trúc Trie đã được lọc/đánh dấu, dùng làm đầu vào cho module `visualize`.
-
----
 

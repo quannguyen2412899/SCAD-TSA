@@ -12,11 +12,25 @@ using namespace std;
 // Định nghĩa tên file output mặc định cho JSON
 const string FN_JSON_COMPLETE = "complete_trie.json";
 const string FN_JSON_PARTIAL  = "partial_trie.json";
-const string FN_JSON_FREQ     = "freq_anomalies.json";
-const string FN_JSON_LEN      = "len_anomalies.json";
+const string FN_JSON_FREQ     = "frequency_anomalies.json";
+const string FN_JSON_LEN      = "length_anomalies.json";
 const string FN_JSON_ENTROPY  = "entropy_anomalies.json";
 
-void printHelp();
+void printHelp() {
+    cout << "Usage: analyze <input_file> <output_dir> [flags]\n\n"
+         << "Configuration flags:\n"
+         << "  --perc-freq=<val>      Percentile threshold for Frequency (Low, default: 5)\n"
+         << "  --perc-len=<val>       Percentile threshold for Length (Low, default: 5)\n"
+         << "  --perc-entropy=<val>   Percentile threshold for Entropy (High, default: 95)\n\n"
+         << "JSON export flags (Outputs saved to <output_dir>):\n"
+         << "  --json-complete        Export " << FN_JSON_COMPLETE << "\n"
+         << "  --json-partial         Export " << FN_JSON_PARTIAL << " (trimmed)\n"
+         << "  --json-freq            Export " << FN_JSON_FREQ << "\n"
+         << "  --json-len             Export " << FN_JSON_LEN << "\n"
+         << "  --json-entropy         Export " << FN_JSON_ENTROPY << "\n"
+         << "\nOther flags:\n"
+         << "  --help                 Show this help message\n";
+}
 
 // Hàm tiện ích kiểm tra tiền tố chuỗi
 bool startsWith(const string& str, const string& prefix) {
@@ -26,7 +40,7 @@ bool startsWith(const string& str, const string& prefix) {
 
 int main(int argc, char *argv[]) {
 
-    // Giữ nguyên thông báo khởi động (có thể bỏ nếu muốn im lặng hoàn toàn)
+    // Giữ nguyên thông báo khởi động
     cerr << "========== Analyze and report ==========" << endl;
 
     if (argc == 2 && string(argv[1]) == "--help") {
@@ -112,7 +126,7 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    cout << valPercFreq << ' ' << valPercLen << ' ' << valPercEntropy << endl;
+    // cout << valPercFreq << ' ' << valPercLen << ' ' << valPercEntropy << endl;
     // return 0;
 
     /* Build trie */
@@ -178,22 +192,6 @@ int main(int argc, char *argv[]) {
     }
 
     return 0;
-}
-
-void printHelp() {
-    cout << "Usage: analyze <input_file> <output_dir> [flags]\n\n"
-         << "Configuration flags:\n"
-         << "  --perc-freq=<val>      Percentile threshold for Frequency (Low, default: 5)\n"
-         << "  --perc-len=<val>       Percentile threshold for Length (Low, default: 5)\n"
-         << "  --perc-entropy=<val>   Percentile threshold for Entropy (High, default: 95)\n\n"
-         << "JSON export flags (Outputs saved to <output_dir>):\n"
-         << "  --json-complete        Export " << FN_JSON_COMPLETE << "\n"
-         << "  --json-partial         Export " << FN_JSON_PARTIAL << " (trimmed)\n"
-         << "  --json-freq            Export " << FN_JSON_FREQ << "\n"
-         << "  --json-len             Export " << FN_JSON_LEN << "\n"
-         << "  --json-entropy         Export " << FN_JSON_ENTROPY << "\n"
-         << "\nOther flags:\n"
-         << "  --help                 Show this help message\n";
 }
 
 // Compile: g++ -std=c++17 -Iinclude -o bin/analyze src/analyze.cpp src/Analysis.cpp src/StatTrie.cpp

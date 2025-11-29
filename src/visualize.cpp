@@ -11,7 +11,7 @@ int main(int argc, char* argv[]) {
 
     cout << "========== Visualize trie ==========" << endl;
 
-    if (argc < 3) {
+    if (argc < 3 || argc > 3) {
         cerr << "[ERROR] Expect: visualize <input_file> <output_file>" << endl;
         exit(EXIT_FAILURE);
     }
