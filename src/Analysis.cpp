@@ -138,9 +138,9 @@ void Analysis::computePercentileThresholds() {
     if (eIdx >= entropies.size()) eIdx = entropies.size() - 1;
     if (lIdx >= lenFreqs.size()) lIdx = lenFreqs.size() - 1;
 
-    freqThreshold = freqs[fIdx];
-    entropyThreshold = entropies[eIdx];
-    lenFreqThreshold = lenFreqs[lIdx].second;
+    if(!freqs.empty()) freqThreshold = freqs[fIdx];
+    if(!entropies.empty()) entropyThreshold = entropies[eIdx];
+    if(!lenFreqs.empty()) lenFreqThreshold = lenFreqs[lIdx].second;
 }
 
 
