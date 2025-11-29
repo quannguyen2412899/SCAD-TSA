@@ -1,4 +1,4 @@
-#include "../include/Analysis.h"
+#include "Analysis.h"
 using namespace std;
 using json = nlohmann::json;
 
@@ -13,14 +13,12 @@ Analysis::Analysis(double freqPercentile, double lenPercentile, double entropyPe
     maxFreq(0), minFreq(0),
     maxDepth(0), minDepth(0),
     maxEntropy(0), minEntropy(0),
-    // mostPopLength(0), leastPopLength(0),
     freqAnomaliesRate(0), lenAnomaliesRate(0), entropyAnomaliesRate(0) {}
 
     
 /* ==================== Helper: Compute entropy ==================== */
 
 double Analysis::computeLocalEntropy(const Node* node) {
-    // if (node->children.empty()) return 0.0;
     double total = node->count;
 
     double H = 0.0;
@@ -43,6 +41,7 @@ void Analysis::collectStatistics(const StatTrie* _trie) {
     totalInsertedWords = trie->totalInsertedWords();
     totalUniqueWords = trie->totalUniqueWords();
     totalNodes = trie->totalNodes();
+    totalUniqueWordChar = trie->totalUniqueWordCharacters();
 
     allEntries.clear();
     
@@ -70,10 +69,10 @@ void Analysis::collectStatistics(const StatTrie* _trie) {
 
             allEntries.push_back(entry);
 
-            if (lenFreq.count(entry.depth)) lenFreq[entry.depth] += 1;
-            else lenFreq[entry.depth] = 1;
+            if (lenFreq.count(entry.depth)) lenFreq[entry.depth] += entry.count;
+            else lenFreq[entry.depth] = entry.count;
 
-            totalUniqueWordChar += entry.depth;
+            // totalUniqueWordChar += entry.depth;
         }
     };
     trie->traverse(callback);
@@ -131,13 +130,9 @@ void Analysis::computePercentileThresholds() {
         return a.second < b.second;
     });
 
-    // mostPopLength = lenFreqs.front().first;
-    // leastPopLength = lenFreqs.back().first;
-    
     size_t fIdx = (size_t)((freqPercentile/100.0) * freqs.size());
     size_t eIdx = (size_t)((entropyPercentile/100.0) * entropies.size());
-    size_t lIdx = 0;
-    for (size_t count = lenFreqs[0].second; count < (lenPercentile/100.0) * totalInsertedWords; count += lenFreqs[++lIdx].second);
+    size_t lIdx = (size_t)((lenPercentile/100.0) * lenFreqs.size());
 
     if (fIdx >= freqs.size()) fIdx = freqs.size() - 1;
     if (eIdx >= entropies.size()) eIdx = entropies.size() - 1;
@@ -179,20 +174,6 @@ void Analysis::markAnomalyNodes(unordered_set<const Node*> &anomalyNodes, const 
 }
 
 
-
-/* ==================== Export report, csv and json ====================*/
-
-// void Analysis::report(const string directory) const {
-
-//     cout << "All outputs are stored in " << directory << endl;
-
-//     exportAnomaliesToCSV(directory);
-//     exportCSV(directory+"/all_entries.csv");
-//     exportReport(directory+"/overall_report.txt");
-
-// }
-
-
 /* ==================== Detect anomalies by frequency/length/entropy ==================== */
 
 void Analysis::detectAnomalies() {
@@ -222,6 +203,7 @@ void Analysis::detectAnomalies() {
     }
 
     auto compare = [](const AnomalyEntry &a, const AnomalyEntry &b) {
+        if (a.score == b.score) return a.word.compare(b.word) < 0;
         return a.score < b.score;
     };
     // sort anomalies theo score tăng dần (score càng nhỏ càng hiếm)
@@ -233,85 +215,6 @@ void Analysis::detectAnomalies() {
 }
 
 
-
-/* ==================== Print anomalies to screen ==================== */
-
-// void Analysis::printAnomalies(const vector<AnomalyEntry> &anomalies) const {
-//     // std::cout << "Word\tCount\tFreqRate\tEntropy\tDepth\tScore\n";
-//     std::cout << "String\tCount\tFreqRate\tEntropy\tDepth\n";
-//     std::cout << "---------------------------------------------------------------\n";
-//     for (auto &a : anomalies) {
-//         std::cout << a.word << "\t"
-//                     << a.count << "\t"
-//                     << std::fixed << std::setprecision(5) << a.freqRate << "\t"
-//                     << a.entropy << "\t"
-//                     << a.depth << "\n";
-//                     // << a.score << "\n";
-//     }
-// }
-
-
-/* ==================== Export to json ==================== */
-
-// void Analysis::exportJSON(const string exportFile) const {
-//     exportJSON(*trie, exportFile);
-// }
-
-
-// void Analysis::exportJSON (const StatTrie &_trie, const string exportFile) const {
-
-//     ofstream file (exportFile, ios::trunc);
-//     if (!file.is_open()) {
-//         cout << "Failed to open " << exportFile << "to export json.";
-//         return;
-//     }
-//     json jData, jRoot, jLabels, jIsAnomaly;
-//     count_t id = 0;
-
-//     auto collector = [&] (const StatTrie::Node* node, const string &prefix) {
-
-//         if (prefix.empty()) jLabels[0] = "root";
-//         else jLabels[id] = string(1, prefix.back());
-//         json* j = &jRoot;
-//         for (char c : prefix) j = &((*j)["children"][string(1, c)]);
-
-//         (*j)["children"] = json::object();
-//         for (const pair<const char, StatTrie::Node*> p : node->children) {
-//             (*j)["children"][string(1, p.first)] = json::object();
-//         }
-//         (*j)["count"] = node->count;
-//         // (*j)["isEnd"] = node->isEnd;
-//         (*j)["ID"] = id;
-//         jIsAnomaly[id] = (bool)anomalyNodes.count(node);
-//         id++;
-//     };
-
-//     _trie.traverse(collector);
-//     jData["root"] = jRoot;
-//     jData["labels"] = jLabels;
-//     jData["totalUnique"] = _trie.totalUniqueWords();
-//     jData["isAnomaly"] = jIsAnomaly;
-    
-//     file << jData.dump(2);
-//     file.close();
-// }
-
-
-// void Analysis::exportAnomaliesToJSON(const string directory) const {
-//     StatTrie rareTrie;
-//     for (const AnomalyEntry &entry : freqAnomalies) rareTrie.insert(entry.word, entry.count);
-//     exportJSON(rareTrie, directory+"/rare_frequency.json");
-
-//     rareTrie.clear();
-//     for (const AnomalyEntry &entry : lenAnomalies) rareTrie.insert(entry.word, entry.count);
-//     exportJSON(rareTrie, directory+"/rare_length.json");
-    
-//     rareTrie.clear();
-//     for (const AnomalyEntry &entry : entropyAnomalies) rareTrie.insert(entry.word, entry.count);
-//     exportJSON(rareTrie, directory+"/rare_entropy.json");   
-// }
-
-
 /* ==================== Export to csv ==================== */
 
 // Helper: write csv content to file stream
@@ -321,7 +224,7 @@ void Analysis::writeCSVToFilestream (ofstream& file, const vector<AnomalyEntry>&
         string status;
         if (entry.count <= freqThreshold) status += "frequency/";
         if (entry.isWord && lenFreq.at(entry.depth) <= lenFreqThreshold) status += "length/";
-        if (!entry.isWord && entry.entropy <= entropyThreshold) status += "entropy/";
+        if (!entry.isWord && entry.entropy >= entropyThreshold) status += "entropy/";
         if (!status.empty()) status.pop_back();
         file << escapeCSV(entry.word) << ','
              << (entry.isWord ? "word" : "prefix") << ','
@@ -422,7 +325,7 @@ void Analysis::exportReport(const string exportFile) const {
          << "\n\n-------------------------- Thresholds ----------------------------\n\n"
          << "- Word frequency threshold (" << freqPercentile << "% lower percentile): " << freqThreshold << '\n'
          << "- Length frequency threshold (" << lenPercentile << "% lower percentile): " << lenFreqThreshold << '\n'
-         << "- Entropy threshold (" << entropyPercentile << "% lower percentile): " << entropyThreshold
+         << "- Entropy threshold (" << entropyPercentile << "% upper percentile): " << entropyThreshold
          
          << "\n\n-------------------- Anomalies: frequency-based --------------------\n\n";
 

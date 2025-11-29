@@ -1,7 +1,7 @@
 #include <iostream>
 #include <string>
 #include <cstring>
-#include "../include/Preprocessor.h"
+#include "Preprocessor.h"
 
 using namespace std;
 
@@ -73,6 +73,6 @@ int main(int argc, char** argv) {
     }
 
     pp.processFile(inputFile, outputFile);
-    cout << "Cleaned data exported to " << outputFile << endl;
+    cout << "Cleaned data exported to: " << outputFile << endl;
     return 0;
 }

@@ -1,7 +1,4 @@
-#include "../include/Preprocessor.h"
-
-// Preprocessor.cpp
-#include "../include/Preprocessor.h"
+#include "Preprocessor.h"
 #include <iostream>
 #include <fstream>
 #include <string>
