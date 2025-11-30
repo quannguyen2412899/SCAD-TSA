@@ -238,7 +238,7 @@ void StatTrie::exportPartialJSON(const string exportFile, const unordered_set<co
     json j;
     j["root"] = toPartialJSON(root, trimNodes, containTrimNode, id);
     j["root"]["label"] = "root";
-    file << j.dump(2);
+    file << j.dump(2, ' ', false, json::error_handler_t::replace);
     file.close();
 
     cout << "JSON is saved at: " << exportFile << endl;
@@ -279,7 +279,7 @@ void StatTrie::exportAllJSON(const string exportFile, const unordered_set<const 
     json j;
     j["root"] = toJSON(root, anomalyNodes, id);
     j["root"]["label"] = "root";
-    file << j;
+    file << j.dump(-1, ' ', false, json::error_handler_t::replace);
     file.close();
 
     cout << "JSON is saved at: " << exportFile << endl;

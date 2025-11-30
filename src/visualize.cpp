@@ -11,12 +11,12 @@ int main(int argc, char* argv[]) {
 
     cout << "========== Visualize trie ==========" << endl;
 
-    if (argc < 3) {
+    if (argc < 3 || argc > 3) {
         cerr << "[ERROR] Expect: visualize <input_file> <output_file>" << endl;
         exit(EXIT_FAILURE);
     }
 
-    string command = "python3 src/visualize.py ";
+    string command = "python3 src/Visualize.py ";
     for (int i = 1; i < argc; ++i) {
         command += argv[i];
         if (i < argc - 1) {
