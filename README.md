@@ -9,7 +9,8 @@
 | Mô tả | Liên kết |
 | :--- | :--- |
 | **GitHub Repository** | [https://github.com/quannguyen2412899/SCAD-TSA](https://github.com/quannguyen2412899/SCAD-TSA) |
-| Google Colab Notebook | [https://colab.research.google.com/github/quannguyen2412899/SCAD-TSA/blob/master/colab/demo.ipynb](https://colab.research.google.com/github/quannguyen2412899/SCAD-TSA/blob/master/colab/demo.ipynb) |
+| **Google Colab Notebook** | [https://colab.research.google.com/github/quannguyen2412899/SCAD-TSA/blob/master/colab/demo.ipynb](https://colab.research.google.com/github/quannguyen2412899/SCAD-TSA/blob/master/colab/demo.ipynb) |
+| **File báo cáo** | [https://github.com/quannguyen2412899/SCAD-TSA/blob/master/report/Report.pdf](https://github.com/quannguyen2412899/SCAD-TSA/blob/master/report/Report.pdf) |
 
 ---
 ## 🔧 Yêu cầu hệ thống và phụ thuộc
