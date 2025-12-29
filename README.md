@@ -19,7 +19,7 @@
 
 #### 1. C++
 * **Compiler:** GNU C++ Compiler (g++), hỗ trợ chuẩn C++17 trở lên.
-* **Thư viện Bên ngoài:** **nlohmann/json**
+* **Thư viện Bên ngoài:** [**nlohmann/json**](https://github.com/nlohmann/json)
     * Sử dụng bởi module **`bin/analyze`** để xuất các file JSON cấu trúc Trie.
     * File header `json.hpp` được đặt trong thư mục `include/` của dự án và được link vào lúc biên dịch.
 
