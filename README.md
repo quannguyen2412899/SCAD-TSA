@@ -3,7 +3,7 @@
 ### 🎓 Thông tin đề tài
 | Học phần | Cấu trúc dữ liệu và Giải thuật Mở rộng|
 | :--- | :--- |
-| **Sinh viên** | Trần Tấn Phát<br>Nguyễn Anh Quân|
+| **Sinh viên** | Trần Tấn Phát - 2412610<br>Nguyễn Anh Quân - 2412899|
 
 ### 🌐 Kho lưu trữ và Tài liệu
 | Mô tả | Liên kết |
