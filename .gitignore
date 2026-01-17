@@ -37,11 +37,11 @@
 ehthumbs.db
 Thumbs.db
 
-
+# Custom #
+##########
 .vscode
 test
 data
 bin
 backup
 main*
-result*
