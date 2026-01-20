@@ -9,6 +9,28 @@
 ## Back-end (core xử lý)
 - Logic chính: `app.py`
 ## Hợp đồng dữ liệu và luồng dữ liệu
+### Hợp đồng
+#### request từ front-end:
+* method: `POST`
+* url: `/api/analyze`
+* Format: `multipart/form-data`
+* Các trường của body:
+    * `"uploadFile"`: file (binary) 
+    * `"config"`: chuỗi cấu hình (theo format JSON)
+        * `"delim"`, `"ignore"`, `"regex"`: chuỗi
+        * `"frequencyPerc"`, `"lengthPerc"`, `"entropyPerc"`: số thực
+        * `"visual"`: `"complete"`/`"partial"`/`"freq"`/`"len"`/`"entropy"`/ `"none"` (chỉ một)
+#### response từ back-end:
+trả về chuỗi theo format json:
+* `"status"`: nếu không có lỗi thì `"success"`, có lỗi thì bất kỳ chuỗi gì
+* `"message"`(optional): chuỗi tuỳ ý
+* `"tableData"`: gồm nội dung các file csv dạng chuỗi
+    * `"allEntries"`: toàn bộ nội dung file `all_entries.csv`
+    * `"freqAnomalies"`: toàn bộ nội dung file `frequency_anomalies.csv`
+    * `"lenAnomalies"`: toàn bộ nội dung file `length_anomalies.csv`
+    * `"entropyAnomalies"`: toàn bộ nội dung file `entropy_anomalies.csv`
+(tạm thời chỉ hiển thị các bảng biểu)
+### Luồng dữ liệu
 * ***front-end*** nhận raw file từ ***user***, gửi cho ***back-end***
 * ***back-end*** download về server, đặt trong `uploads/`
 * ***back-end*** gọi executable `main_pipeline` để xử lý, xuất kết quả vào `results/`
