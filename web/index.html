@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Demo</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div id="header">
+            <h1>SCAD-TSA</h1>
+        </div>
+        
+    <div id="upload">
+        <h3>Upload file:</h3>
+        <input type="file" id="input-file">
+    </div>
+    
+    <div>
+        <h3>Configure thresholds (%):</h3>
+        <div id = "config">
+            <p>Frequency</p>
+            <input type="number" value="5" id="freq-perc" max="100" min="0">
+            <p>Length</p>
+            <input type="number" value="5" id="len-perc" max="100" min="0">
+            <p>Entropy</p>
+            <input type="number" value="95" id="entropy-perc" max="100" min="0">
+        </div>
+    </div>
+
+    <br>
+
+    <button id="run" onclick="sendRequest('Đang gửi request...')">Run analysis</button>
+
+    <div id="results">
+        <h2>Analysis Results</h2>
+
+        <div class="tab-header">
+            <button class="tab-button active" onclick="openTab('box-freq', this)">Frequency</button>
+            <button class="tab-button" onclick="openTab('box-len', this)">Length</button>
+            <button class="tab-button" onclick="openTab('box-entropy', this)">Entropy</button>
+        </div>
+
+        <hr>
+
+        <div id="box-freq" class="result-box active">
+            <h3>Frequency Anomalies</h3>
+            <div id="table-freq">Waiting for data...</div>
+        </div>
+
+        <div id="box-len" class="result-box">
+            <h3>Length Anomalies</h3>
+            <div id="table-len">Waiting for data...</div>
+        </div>
+
+        <div id="box-entropy" class="result-box">
+            <h3>Entropy Anomalies</h3>
+            <div id="table-entropy">Waiting for data...</div>
+        </div>
+
+    <!-- <p id="error-message" style="color: red;"></p> -->
+    </div>
+
+</body>
+</html>
