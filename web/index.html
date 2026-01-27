@@ -7,19 +7,26 @@
 <body>
 
     <div id="header">
-            <h1>SCAD-TSA</h1>
+        <h1>SCAD-TSA</h1>
     </div>
         
     <div id="upload">
         <h3>Upload file:</h3>
         <input type="file" id="input-file" >
     </div>
-
-    <!-- LACKING PREPROCESS CONFIG INPUT -->
     
-    <div>
-        <h3>Configure thresholds (%):</h3>
-        <div id = "config">
+    <div id="config">
+        <h3>Preprocess configurations:</h3>
+        <div id="preprocess-config">
+            <p>Delimiters</p>
+            <input type="text" id="delim">
+            <p>Ignored characters</p>
+            <input type="text" id="ignore">
+            <p>Regular expression</p>
+            <input type="text" id="regex">
+        </div>
+        <h3>Thresholds configurations (%):</h3>
+        <div id="analyze-config">
             <p>Frequency</p>
             <input type="number" value="5" id="freq-perc" max="100" min="0">
             <p>Length</p>

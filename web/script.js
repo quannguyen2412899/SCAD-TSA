@@ -18,10 +18,11 @@ async function sendRequest() {
             lengthPerc: lenPerc,
             entropyPerc: enPerc
         }
+        const jsonConfig = JSON.stringify(configuration);
 
         const formData = new FormData();
         formData.append("uploadFile", file);
-        formData.append("config", configuration);
+        formData.append("config", jsonConfig);
 
         const response = await fetch('/api/analyze', {
             method: 'POST',
@@ -30,6 +31,6 @@ async function sendRequest() {
     }
 
     else {
-        alert("Upload a file to run analysis!");
+        alert("Upload a file to start analysis!");
     }
 }
