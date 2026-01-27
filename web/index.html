@@ -8,12 +8,14 @@
 
     <div id="header">
             <h1>SCAD-TSA</h1>
-        </div>
+    </div>
         
     <div id="upload">
         <h3>Upload file:</h3>
-        <input type="file" id="input-file">
+        <input type="file" id="input-file" >
     </div>
+
+    <!-- LACKING PREPROCESS CONFIG INPUT -->
     
     <div>
         <h3>Configure thresholds (%):</h3>
@@ -29,7 +31,7 @@
 
     <br>
 
-    <button id="run" onclick="sendRequest('Đang gửi request...')">Run analysis</button>
+    <button id="run" onclick="sendRequest()">Run analysis</button>
 
     <div id="results">
         <h2>Analysis Results</h2>
@@ -60,5 +62,6 @@
     <!-- <p id="error-message" style="color: red;"></p> -->
     </div>
 
+    <script src="script.js"></script>
 </body>
 </html>
