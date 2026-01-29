@@ -15,7 +15,7 @@ body {
 }
 
 #config {
-
+    display: none;
     border: 1px solid #000000;
     width: 100%;
 }
@@ -37,10 +37,33 @@ body {
 }
 
 #run {
-    display: flex;
+    display: none;  /* flex */
     align-items: center;
     justify-content: center;
     width: 200px;
     height: 50px;
     margin: auto;
+}
+
+#results {
+    display: none;
+}
+
+.tab-button {
+    opacity: 0.5;
+    background-color: #eee;
+}
+
+.tab-button.active {
+    opacity: 1.0; 
+    background-color: #fff;
+    font-weight: bold;
+}
+
+#box-len {
+    display: none;
+}
+
+#box-entropy {
+    display: none;
 }
