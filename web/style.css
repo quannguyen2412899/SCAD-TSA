@@ -67,3 +67,18 @@ body {
 #box-entropy {
     display: none;
 }
+
+table {
+    border-collapse: collapse; /* Makes borders single lines instead of double */
+    width: auto;
+}
+
+table, th, td {
+    border: 1px solid black; /* The classic "old school" border */
+    padding: 10px;            /* Gives the text some breathing room */
+    text-align: left;        /* Aligns text to the left */
+}
+
+th {
+    background-color: #f2f2f2; /* Light grey to make the header stand out */
+}

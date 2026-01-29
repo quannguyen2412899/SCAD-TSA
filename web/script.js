@@ -14,6 +14,7 @@ fileInput.addEventListener("change", function() {
 });
 
 async function sendRequest() {
+    document.getElementById("results").style.display = "block";
     const file = fileInput.files[0];
     if (file) {
         const delimiters = document.getElementById("delim").value;
@@ -44,7 +45,7 @@ async function sendRequest() {
             body: formData
         });
 
-        handleResposne(response);
+        handleResponse(response);
     }
 
     else {
@@ -52,8 +53,53 @@ async function sendRequest() {
     }
 }
 
-function handleResposne(response) {
-    // ***
+async function handleResponse(response) {
+
+    function insertTable(divId, csvTable) {
+        document.getElementById(divId).innerHTML = csvToHtml(csvTable);
+    }
+
+    function csvToHtml(csvString) {
+        const result = Papa.parse(csvString, {
+            header: false,
+            skipEmptyLines: true,
+            dynamicTyping: false
+        }).data;
+
+        if(!result || result.length === 0) {
+            return "<p>No data available.</p>";
+        }
+
+        let html = "<table><tr>";
+        result[0].forEach(function(cell) {
+            html += `<th>${cell}</th>`;
+        });
+        html += "</tr>";
+        for(let i = 1; i < result.length; i+=1) {
+            html += "<tr>";
+            result[i].forEach(function(cell) {
+                html += `<td>${cell}</td>`;
+            });
+            html += "</tr>";
+        }
+        html += `</table>`;
+
+        return html;
+    }
+
+    if (response.ok) {
+        const data = await response.json();
+        const tables = data.tableData;
+        const freqCSV = tables.freqAnomalies;
+        const lenCSV = tables.lenAnomalies;
+        const entropyCSV = tables.entropyAnomalies;
+        insertTable("table-freq", freqCSV);
+        insertTable("table-len", lenCSV);
+        insertTable("table-entropy", entropyCSV);
+    }
+    else {
+        alert("Some errors occur !!");
+    }
 }
 
 function openTab(box, button) {
