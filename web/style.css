@@ -596,7 +596,110 @@ td.anomaly-badge {
     to { transform: scale(1); opacity: 1; }
 }
 
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+}
+
+/* Download buttons group */
+.download-buttons-group {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.btn-download {
+    padding: 0.625rem 1.25rem;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+}
+
+.btn-download-json {
+    background-color: rgba(59, 130, 246, 0.1);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    color: #60a5fa;
+}
+
+.btn-download-json:hover {
+    background-color: rgba(59, 130, 246, 0.2);
+    color: white;
+}
+
+.btn-download-png {
+    background-color: rgba(6, 182, 212, 0.1);
+    border: 1px solid rgba(6, 182, 212, 0.3);
+    color: var(--accent-color);
+}
+
+.btn-download-png:hover {
+    background-color: rgba(6, 182, 212, 0.2);
+    color: white;
+}
+
+/* Warnings */
+.visual-warning-wrapper {
+    display: flex;
+    gap: 1rem;
+    padding: 1.5rem;
+    background: rgba(245, 158, 11, 0.05);
+    border: 1px solid rgba(245, 158, 11, 0.2);
+    border-radius: 12px;
+    margin-top: 1rem;
+    text-align: left;
+}
+
+.warning-icon {
+    font-size: 1.75rem;
+    line-height: 1;
+}
+
+.warning-content {
+    flex: 1;
+}
+
+.warning-title {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--warning-color);
+    margin-bottom: 0.5rem;
+}
+
+.warning-text {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.75rem;
+    line-height: 1.6;
+}
+
+.warning-text strong {
+    color: var(--text-primary);
+}
+
+.warning-help {
+    font-size: 0.8125rem;
+    color: var(--text-secondary);
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    padding-top: 0.75rem;
+    line-height: 1.5;
+}
+
+.warning-help a {
+    color: var(--accent-color);
+    text-decoration: underline;
+}
+
+.warning-help a:hover {
+    color: white;
+}
+
+/* Empty states */
+.empty-state {
+    padding: 3rem 1.5rem;
+    text-align: center;
+    color: var(--text-secondary);
 }

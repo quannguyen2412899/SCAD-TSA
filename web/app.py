@@ -178,22 +178,27 @@ async def analyze(
         else:
             table_data[key] = ""
 
-    # 6. Check for generated visualization images
+    # 6. Check for generated visualization files (JSON and PNG)
     visuals = {}
-    png_mappings = {
-        "complete": "complete_trie.png",
-        "partial": "partial_trie.png",
-        "freq": "frequency_anomalies.png",
-        "len": "length_anomalies.png",
-        "entropy": "entropy_anomalies.png"
+    file_mappings = {
+        "complete": "complete_trie",
+        "partial": "partial_trie",
+        "freq": "frequency_anomalies",
+        "len": "length_anomalies",
+        "entropy": "entropy_anomalies"
     }
 
-    for key, filename in png_mappings.items():
-        file_path = os.path.join(task_result_dir, filename)
-        if os.path.exists(file_path):
-            visuals[key] = f"/results/{task_id}/{filename}"
-        else:
-            visuals[key] = None
+    for key, base_name in file_mappings.items():
+        json_filename = f"{base_name}.json"
+        png_filename = f"{base_name}.png"
+        
+        json_path = os.path.join(task_result_dir, json_filename)
+        png_path = os.path.join(task_result_dir, png_filename)
+        
+        visuals[key] = {
+            "json": f"/results/{task_id}/{json_filename}" if os.path.exists(json_path) else None,
+            "png": f"/results/{task_id}/{png_filename}" if os.path.exists(png_path) else None
+        }
 
     return JSONResponse(
         status_code=200,

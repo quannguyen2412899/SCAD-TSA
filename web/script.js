@@ -159,22 +159,65 @@ async function handleResponse(response) {
         const oldVisual = boxDiv.querySelector('.visual-container');
         if (oldVisual) oldVisual.remove();
 
-        // Check if there is an image to display
-        let imgUrl = visuals[key];
-        if (!imgUrl && isPartialSelected && visuals["partial"] && key !== "complete") {
+        // Check if there is an image or JSON to display
+        let visualObj = visuals[key];
+        if ((!visualObj || (!visualObj.json && !visualObj.png)) && isPartialSelected && visuals["partial"] && key !== "complete") {
             // Fallback: if partial trie is selected, render it for Freq, Len, Entropy tabs
-            imgUrl = visuals["partial"];
+            visualObj = visuals["partial"];
         }
 
-        if (imgUrl) {
+        if (visualObj && (visualObj.json || visualObj.png)) {
             const visualContainer = document.createElement("div");
             visualContainer.className = "visual-container";
+            
+            let downloadButtonsHtml = `<div class="download-buttons-group">`;
+            if (visualObj.json) {
+                downloadButtonsHtml += `
+                    <a href="${visualObj.json}" download class="btn-download btn-download-json">
+                        📥 Tải file JSON cấu trúc Trie
+                    </a>
+                `;
+            }
+            if (visualObj.png) {
+                downloadButtonsHtml += `
+                    <a href="${visualObj.png}" download class="btn-download btn-download-png">
+                        🖼️ Tải ảnh Trie (PNG)
+                    </a>
+                `;
+            }
+            downloadButtonsHtml += `</div>`;
+
+            let imgHtml = "";
+            if (visualObj.png) {
+                imgHtml = `
+                    <div class="visual-img-wrapper">
+                        <img src="${visualObj.png}" alt="Trie Diagram" class="trie-image" onclick="openImageModal('${visualObj.png}')" />
+                    </div>
+                    <p class="img-hint">Nhấp vào hình ảnh để phóng to toàn màn hình</p>
+                `;
+            } else if (visualObj.json) {
+                // JSON exists but PNG is missing (missing graphviz system tool)
+                imgHtml = `
+                    <div class="visual-warning-wrapper">
+                        <span class="warning-icon">⚠️</span>
+                        <div class="warning-content">
+                            <p class="warning-title">Không thể xuất ảnh sơ đồ cây Trie</p>
+                            <p class="warning-text">
+                                <strong>Lý do:</strong> Máy chủ chưa cài đặt phần mềm hệ thống <strong>Graphviz</strong> (lệnh <code>dot</code>) hoặc chưa cấu hình biến môi trường PATH.<br>
+                                Tuy nhiên, bạn vẫn có thể tải về file cấu trúc dữ liệu JSON ở trên.
+                            </p>
+                            <p class="warning-help">
+                                <strong>Để hiển thị hình vẽ:</strong> Hãy cài đặt Graphviz từ <a href="https://graphviz.org/" target="_blank">graphviz.org</a> và thêm thư mục chứa lệnh <code>dot.exe</code> (thường là <code>C:\\Program Files\\Graphviz\\bin</code>) vào biến môi trường <strong>PATH</strong> của hệ thống, sau đó khởi động lại server.
+                            </p>
+                        </div>
+                    </div>
+                `;
+            }
+
             visualContainer.innerHTML = `
-                <h3>Cấu Trúc Nhánh Cây Trie Của Tab</h3>
-                <div class="visual-img-wrapper">
-                    <img src="${imgUrl}" alt="Trie Diagram" class="trie-image" onclick="openImageModal('${imgUrl}')" />
-                </div>
-                <p class="img-hint">Nhấp vào hình ảnh để phóng to toàn màn hình</p>
+                <h3>📁 File Cấu Trúc Cây Trie</h3>
+                ${downloadButtonsHtml}
+                ${imgHtml}
             `;
             boxDiv.appendChild(visualContainer);
         }
