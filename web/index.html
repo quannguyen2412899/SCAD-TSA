@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SCAD-TSA - Trie Anomaly Detection</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <!-- Style Sheet -->
+    <link rel="stylesheet" href="style.css">
+    <!-- PapaParse for CSV parsing -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+</head>
+<body>
+
+    <div class="container">
+        <!-- Dashboard Header -->
+        <header id="header">
+            <div class="logo-area">
+                <span class="logo-icon">🌳</span>
+                <div>
+                    <h1>SCAD-TSA</h1>
+                    <p class="subtitle">Nén & Phát Hiện Chuỗi Bất Thường Bằng Trie & Phân Tích Thống Kê</p>
+                </div>
+            </div>
+            <div class="system-status">
+                <span class="status-indicator online"></span>
+                <span class="status-text">Backend Active</span>
+            </div>
+        </header>
+
+        <main class="dashboard-grid">
+            <!-- Left Side: Upload & Configuration -->
+            <section class="control-panel">
+                <!-- File Upload Card -->
+                <div class="card" id="upload-card">
+                    <h2 class="card-title"><span class="number-badge">1</span> Tải Lên Tập Dữ Liệu</h2>
+                    <div class="upload-dropzone" id="dropzone">
+                        <input type="file" id="input-file" accept=".txt,.log,.csv">
+                        <div class="dropzone-content">
+                            <span class="upload-icon">📁</span>
+                            <p class="dropzone-main-text">Kéo & thả file log vào đây hoặc click để chọn</p>
+                            <p class="dropzone-sub-text">Hỗ trợ các file định dạng .log, .txt, .csv</p>
+                            <div class="selected-file-badge" id="file-badge">
+                                <span class="file-icon">📄</span>
+                                <span class="file-name" id="file-name-text">filename.log</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Config Card -->
+                <div class="card" id="config-card" style="display: none;">
+                    <h2 class="card-title"><span class="number-badge">2</span> Cấu Hình Bộ Xử Lý</h2>
+                    
+                    <div class="config-section">
+                        <h3>🔧 Tiền xử lý dữ liệu</h3>
+                        <div class="form-group">
+                            <label for="delim">Ký tự phân cách (Delimiters)</label>
+                            <input type="text" id="delim" placeholder="Mặc định tách theo dòng (\n). Dùng khoảng trắng để tách từ.">
+                        </div>
+                        <div class="form-group">
+                            <label for="ignore">Ký tự bỏ qua (Ignored Chars)</label>
+                            <input type="text" id="ignore" value="\r" placeholder="Ví dụ: \r, . , ;">
+                        </div>
+                        <div class="form-group">
+                            <label for="regex">Lọc theo biểu thức chính quy (Regex Pattern)</label>
+                            <input type="text" id="regex" placeholder="Ví dụ trích xuất URL: (?:GET|POST)\s(/[^?\s&quot;]+)">
+                            <small class="form-help">Regex được ưu tiên cao nhất nếu điền</small>
+                        </div>
+                    </div>
+
+                    <div class="config-section">
+                        <h3>📊 Ngưỡng bách phân vị (%)</h3>
+                        <div class="grid-3">
+                            <div class="form-group">
+                                <label for="freq-perc">Tần suất (Freq %)</label>
+                                <input type="number" value="5" id="freq-perc" max="100" min="0" step="0.1">
+                                <small class="form-help">Mặc định: 5 (Chuỗi hiếm)</small>
+                            </div>
+                            <div class="form-group">
+                                <label for="len-perc">Độ dài (Length %)</label>
+                                <input type="number" value="5" id="len-perc" max="100" min="0" step="0.1">
+                                <small class="form-help">Mặc định: 5 (Độ dài hiếm)</small>
+                            </div>
+                            <div class="form-group">
+                                <label for="entropy-perc">Entropy cục bộ (%)</label>
+                                <input type="number" value="95" id="entropy-perc" max="100" min="0" step="0.1">
+                                <small class="form-help">Mặc định: 95 (Nhánh hỗn loạn)</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Giao diện trực quan hóa vẽ hình đã được loại bỏ để tập trung vào xuất file JSON -->
+
+                    <button id="run" onclick="sendRequest()">
+                        <span class="btn-text">Bắt đầu phân tích</span>
+                        <span class="spinner" id="btn-spinner" style="display: none;"></span>
+                    </button>
+                </div>
+            </section>
+
+            <!-- Right Side: Results Display -->
+            <section class="results-panel">
+                <div class="card result-card" id="results" style="display: none;">
+                    <div class="result-header-area">
+                        <h2 class="card-title">🔍 Kết Quả Phân Tích Bất Thường</h2>
+                        <div class="task-info" id="task-info-badge">
+                            Task ID: <span id="task-id-text">...</span>
+                        </div>
+                    </div>
+
+                    <!-- Trie Export Panel -->
+                    <div class="trie-export-panel">
+                        <span class="export-label">🌳 Tải tệp cấu trúc dữ liệu Trie:</span>
+                        <div class="export-controls">
+                            <select id="export-trie-select">
+                                <option value="complete">Toàn bộ cây Trie (complete_trie.json)</option>
+                                <option value="partial" selected>Cây chứa các bất thường (partial_trie.json)</option>
+                                <option value="freq">Cây bất thường tần suất (frequency_anomalies.json)</option>
+                                <option value="len">Cây bất thường độ dài (length_anomalies.json)</option>
+                                <option value="entropy">Cây bất thường Entropy (entropy_anomalies.json)</option>
+                            </select>
+                            <button id="btn-download-trie" onclick="downloadSelectedTrie()" class="btn-download-action">📥 Tải JSON</button>
+                        </div>
+                    </div>
+
+                    <div class="tab-header">
+                        <button class="tab-button active" onclick="openTab('box-freq', this)">🚨 Tần suất</button>
+                        <button class="tab-button" onclick="openTab('box-len', this)">📏 Độ dài</button>
+                        <button class="tab-button" onclick="openTab('box-entropy', this)">⚛️ Entropy</button>
+                        <button class="tab-button" onclick="openTab('box-all', this)">📁 Tất cả chuỗi</button>
+                    </div>
+
+                    <div class="tab-content-container">
+                        <!-- Frequency Tab -->
+                        <div id="box-freq" class="result-box active">
+                            <div class="result-box-header">
+                                <div>
+                                    <h3>Bất Thường Tần Suất (Frequency Anomalies)</h3>
+                                    <p class="tab-desc">Các chuỗi/tiền tố có số lần xuất hiện cực kỳ ít trong hệ thống (dưới ngưỡng bách phân vị đã chọn).</p>
+                                </div>
+                            </div>
+                            <div class="table-container" id="table-freq">Đang đợi dữ liệu...</div>
+                        </div>
+
+                        <!-- Length Tab -->
+                        <div id="box-len" class="result-box">
+                            <div class="result-box-header">
+                                <div>
+                                    <h3>Bất Thường Độ Dài (Length Anomalies)</h3>
+                                    <p class="tab-desc">Các chuỗi có độ dài hiếm xuất hiện (rất ngắn hoặc quá dài) so với phân phối tần suất chung.</p>
+                                </div>
+                            </div>
+                            <div class="table-container" id="table-len">Đang đợi dữ liệu...</div>
+                        </div>
+
+                        <!-- Entropy Tab -->
+                        <div id="box-entropy" class="result-box">
+                            <div class="result-box-header">
+                                <div>
+                                    <h3>Bất Thường Entropy (Entropy Anomalies)</h3>
+                                    <p class="tab-desc">Các nút trong Trie có mức phân nhánh quá mức, biểu thị sự hỗn loạn và đa dạng ký tự bất thường.</p>
+                                </div>
+                            </div>
+                            <div class="table-container" id="table-entropy">Đang đợi dữ liệu...</div>
+                        </div>
+
+                        <!-- All Entries Tab -->
+                        <div id="box-all" class="result-box">
+                            <div class="result-box-header">
+                                <div>
+                                    <h3>Tất Cả Bản Ghi (All Trie Entries)</h3>
+                                    <p class="tab-desc">Danh sách toàn bộ các chuỗi/tiền tố được ghi nhận trên cây Trie cùng đầy đủ các chỉ số thống kê.</p>
+                                </div>
+                            </div>
+                            <div class="table-container" id="table-all">Đang đợi dữ liệu...</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Image modal removed -->
+
+    <!-- Main JavaScript Logic -->
+    <script src="script.js"></script>
+</body>
+</html>

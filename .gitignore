@@ -44,4 +44,12 @@ test
 data
 bin
 backup
-main*
+main_pipeline
+main_pipeline.exe
+.agents
+.claude
+web/uploads
+web/results
+__pycache__
+AGENTS.md
+CLAUDE.md
