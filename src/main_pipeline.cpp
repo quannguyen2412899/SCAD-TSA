@@ -4,6 +4,18 @@
 #include <cstdlib>
 #include <sstream>
 #include <cstring> // For strncmp
+#include <filesystem>
+
+#ifdef _WIN32
+const std::string BIN_PREPROCESS = "bin\\preprocess";
+const std::string BIN_ANALYZE = "bin\\analyze";
+const std::string BIN_VISUALIZE = "bin\\visualize";
+#else
+const std::string BIN_PREPROCESS = "bin/preprocess";
+const std::string BIN_ANALYZE = "bin/analyze";
+const std::string BIN_VISUALIZE = "bin/visualize";
+#endif
+
 
 // Structure to store visualization tasks
 struct VisualTask {
@@ -123,15 +135,14 @@ int main(int argc, char* argv[]) {
     }
 
     // --- STEP 0: CREATE OUTPUT DIRECTORY ---
-    std::string mkdir_cmd = "mkdir -p \"" + output_dir + "\"";
-    std::system(mkdir_cmd.c_str());
+    std::filesystem::create_directories(output_dir);
 
     // --- STEP 1: PREPROCESS ---
     std::string cleaned_input = output_dir + "/cleaned_data.txt";
     std::stringstream pp_cmd;
     
     // Base command
-    pp_cmd << "bin/preprocess \"" << input_text << "\" \"" << cleaned_input << "\"";
+    pp_cmd << BIN_PREPROCESS << " \"" << input_text << "\" \"" << cleaned_input << "\"";
 
     // Priority logic: Regex > Delim/Ignore
     if (!pp_regex.empty()) {
@@ -148,7 +159,7 @@ int main(int argc, char* argv[]) {
 
     // --- STEP 2: ANALYZE ---
     std::stringstream analyze_cmd;
-    analyze_cmd << "bin/analyze \"" << cleaned_input << "\" \"" << output_dir << "\"";
+    analyze_cmd << BIN_ANALYZE << " \"" << cleaned_input << "\" \"" << output_dir << "\"";
 
     // Percentile
     if (!ana_perc_freq.empty()) {
@@ -186,7 +197,7 @@ int main(int argc, char* argv[]) {
     } else {
         for (const auto& task : tasks) {
             std::stringstream vis_cmd;
-            vis_cmd << "bin/visualize \"" << task.json_path << "\" \"" << task.png_path << "\"";
+            vis_cmd << BIN_VISUALIZE << " \"" << task.json_path << "\" \"" << task.png_path << "\"";
             // std::cout << vis_cmd.str() << std::endl;
             run_command("Visualize (" + task.json_path + ")", vis_cmd.str());
         }
