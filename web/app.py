@@ -124,18 +124,14 @@ async def analyze(
     if entropy_perc is not None:
         cmd.append(f"--perc-entropy={entropy_perc}")
 
-    # Map visualization choice
-    visual = cfg.get("visual", "none")
-    if visual == "complete":
-        cmd.append("--visual-complete")
-    elif visual == "partial":
-        cmd.append("--visual-partial")
-    elif visual == "freq":
-        cmd.append("--visual-freq")
-    elif visual == "len":
-        cmd.append("--visual-len")
-    elif visual == "entropy":
-        cmd.append("--visual-entropy")
+    # Always export JSON files for all tabs
+    cmd.extend([
+        "--json-complete",
+        "--json-partial",
+        "--json-freq",
+        "--json-len",
+        "--json-entropy"
+    ])
 
     # 4. Execute the C++ pipeline
     try:

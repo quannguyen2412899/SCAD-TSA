@@ -84,7 +84,6 @@ async function sendRequest() {
     const freqPerc = document.getElementById("freq-perc").valueAsNumber;
     const lenPerc = document.getElementById("len-perc").valueAsNumber;
     const entropyPerc = document.getElementById("entropy-perc").valueAsNumber;
-    const visual = document.getElementById("visual-select").value;
 
     const configuration = {
         delim: delim,
@@ -92,8 +91,7 @@ async function sendRequest() {
         regex: regex,
         frequencyPerc: isNaN(freqPerc) ? 5.0 : freqPerc,
         lengthPerc: isNaN(lenPerc) ? 5.0 : lenPerc,
-        entropyPerc: isNaN(entropyPerc) ? 95.0 : entropyPerc,
-        visual: visual
+        entropyPerc: isNaN(entropyPerc) ? 95.0 : entropyPerc
     };
 
     const formData = new FormData();
@@ -140,84 +138,34 @@ async function handleResponse(response) {
     insertTable("table-entropy", tables.entropyAnomalies, "Không phát hiện thấy bất thường Entropy.");
     insertTable("table-all", tables.allEntries, "Không có dữ liệu.");
 
-    // Handle visuals (render Trie diagrams if generated)
+    // Handle JSON file downloads
     const visuals = data.visuals || {};
-    const visualMapping = {
+    const jsonMapping = {
         "box-freq": "freq",
         "box-len": "len",
         "box-entropy": "entropy",
-        "box-all": "complete" // for all entries we can show complete trie if selected
+        "box-all": "complete"
     };
 
-    // If 'partial' is selected, display it in the active tab (freq, len or entropy) depending on mapping
-    const isPartialSelected = document.getElementById("visual-select").value === "partial";
-
-    for (const [boxId, key] of Object.entries(visualMapping)) {
+    for (const [boxId, key] of Object.entries(jsonMapping)) {
         const boxDiv = document.getElementById(boxId);
         
         // Remove old visual container if it exists
         const oldVisual = boxDiv.querySelector('.visual-container');
         if (oldVisual) oldVisual.remove();
 
-        // Check if there is an image or JSON to display
-        let visualObj = visuals[key];
-        if ((!visualObj || (!visualObj.json && !visualObj.png)) && isPartialSelected && visuals["partial"] && key !== "complete") {
-            // Fallback: if partial trie is selected, render it for Freq, Len, Entropy tabs
-            visualObj = visuals["partial"];
-        }
+        const jsonUrl = visuals[key] ? visuals[key].json : null;
 
-        if (visualObj && (visualObj.json || visualObj.png)) {
+        if (jsonUrl) {
             const visualContainer = document.createElement("div");
             visualContainer.className = "visual-container";
-            
-            let downloadButtonsHtml = `<div class="download-buttons-group">`;
-            if (visualObj.json) {
-                downloadButtonsHtml += `
-                    <a href="${visualObj.json}" download class="btn-download btn-download-json">
+            visualContainer.innerHTML = `
+                <h3>📁 Cấu Trúc Cây Trie (Định dạng JSON)</h3>
+                <div class="download-buttons-group">
+                    <a href="${jsonUrl}" download class="btn-download btn-download-json">
                         📥 Tải file JSON cấu trúc Trie
                     </a>
-                `;
-            }
-            if (visualObj.png) {
-                downloadButtonsHtml += `
-                    <a href="${visualObj.png}" download class="btn-download btn-download-png">
-                        🖼️ Tải ảnh Trie (PNG)
-                    </a>
-                `;
-            }
-            downloadButtonsHtml += `</div>`;
-
-            let imgHtml = "";
-            if (visualObj.png) {
-                imgHtml = `
-                    <div class="visual-img-wrapper">
-                        <img src="${visualObj.png}" alt="Trie Diagram" class="trie-image" onclick="openImageModal('${visualObj.png}')" />
-                    </div>
-                    <p class="img-hint">Nhấp vào hình ảnh để phóng to toàn màn hình</p>
-                `;
-            } else if (visualObj.json) {
-                // JSON exists but PNG is missing (missing graphviz system tool)
-                imgHtml = `
-                    <div class="visual-warning-wrapper">
-                        <span class="warning-icon">⚠️</span>
-                        <div class="warning-content">
-                            <p class="warning-title">Không thể xuất ảnh sơ đồ cây Trie</p>
-                            <p class="warning-text">
-                                <strong>Lý do:</strong> Máy chủ chưa cài đặt phần mềm hệ thống <strong>Graphviz</strong> (lệnh <code>dot</code>) hoặc chưa cấu hình biến môi trường PATH.<br>
-                                Tuy nhiên, bạn vẫn có thể tải về file cấu trúc dữ liệu JSON ở trên.
-                            </p>
-                            <p class="warning-help">
-                                <strong>Để hiển thị hình vẽ:</strong> Hãy cài đặt Graphviz từ <a href="https://graphviz.org/" target="_blank">graphviz.org</a> và thêm thư mục chứa lệnh <code>dot.exe</code> (thường là <code>C:\\Program Files\\Graphviz\\bin</code>) vào biến môi trường <strong>PATH</strong> của hệ thống, sau đó khởi động lại server.
-                            </p>
-                        </div>
-                    </div>
-                `;
-            }
-
-            visualContainer.innerHTML = `
-                <h3>📁 File Cấu Trúc Cây Trie</h3>
-                ${downloadButtonsHtml}
-                ${imgHtml}
+                </div>
             `;
             boxDiv.appendChild(visualContainer);
         }
@@ -289,22 +237,4 @@ function insertTable(divId, csvString, emptyMessage) {
     container.innerHTML = html;
 }
 
-// 6. Image Lightbox Modal Functions
-const modal = document.getElementById("image-modal");
-const modalImg = document.getElementById("modal-img");
-
-function openImageModal(imgUrl) {
-    modal.style.display = "block";
-    modalImg.src = imgUrl;
-}
-
-function closeImageModal() {
-    modal.style.display = "none";
-}
-
-// Close modal when pressing Escape key
-document.addEventListener('keydown', function(event) {
-    if (event.key === "Escape") {
-        closeImageModal();
-    }
-});
+// Finished handling response

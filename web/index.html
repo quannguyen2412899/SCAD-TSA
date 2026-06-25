@@ -93,20 +93,7 @@
                         </div>
                     </div>
 
-                    <div class="config-section">
-                        <h3>🎨 Trực quan hóa cây Trie</h3>
-                        <div class="form-group">
-                            <label for="visual-select">Chế độ vẽ hình</label>
-                            <select id="visual-select">
-                                <option value="none">Không vẽ hình (Chỉ xuất bảng dữ liệu)</option>
-                                <option value="partial" selected>Vẽ cây rút gọn (Chỉ hiển thị nhánh bất thường)</option>
-                                <option value="complete">Vẽ toàn bộ cấu trúc cây Trie</option>
-                                <option value="freq">Chỉ vẽ các nhánh bất thường tần suất</option>
-                                <option value="len">Chỉ vẽ các nhánh bất thường độ dài</option>
-                                <option value="entropy">Chỉ vẽ các nhánh bất thường Entropy</option>
-                            </select>
-                        </div>
-                    </div>
+                    <!-- Giao diện trực quan hóa vẽ hình đã được loại bỏ để tập trung vào xuất file JSON -->
 
                     <button id="run" onclick="sendRequest()">
                         <span class="btn-text">Bắt đầu phân tích</span>
@@ -182,12 +169,7 @@
         </main>
     </div>
 
-    <!-- Image Modal for Full View -->
-    <div id="image-modal" class="modal" onclick="closeImageModal()">
-        <span class="close-modal">&times;</span>
-        <img class="modal-content" id="modal-img">
-        <div id="caption">Cấu trúc cây Trie</div>
-    </div>
+    <!-- Image modal removed -->
 
     <!-- Main JavaScript Logic -->
     <script src="script.js"></script>

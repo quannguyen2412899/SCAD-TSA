@@ -17,11 +17,7 @@ const std::string BIN_VISUALIZE = "bin/visualize";
 #endif
 
 
-// Structure to store visualization tasks
-struct VisualTask {
-    std::string json_path;
-    std::string png_path;
-};
+// VisualTask struct removed since visualization step is deleted
 
 // Function to run system commands and check for errors
 void run_command(const std::string& step_name, const std::string& command) {
@@ -53,12 +49,12 @@ void print_help(const char* prog_name) {
               << "  --perc-freq=<val>      Percentile threshold for Frequency (Low, default: 5)\n"
               << "  --perc-len=<val>       Percentile threshold for Length (Low, default: 5)\n"
               << "  --perc-entropy=<val>   Percentile threshold for Entropy (High, default: 95)\n\n"
-              << "VISUALIZATION FLAGS:\n"
-              << "  --visual-complete   : Visualize the complete Trie\n"
-              << "  --visual-partial    : Visualize partial Trie (show anomalies only)\n"
-              << "  --visual-freq       : Visualize frequency anomalies\n"
-              << "  --visual-len        : Visualize length anomalies\n"
-              << "  --visual-entropy    : Visualize entropy anomalies\n"
+              << "JSON EXPORT FLAGS:\n"
+              << "  --json-complete     : Export complete Trie structure JSON\n"
+              << "  --json-partial      : Export partial Trie structure JSON (show anomalies only)\n"
+              << "  --json-freq         : Export frequency anomalies JSON\n"
+              << "  --json-len          : Export length anomalies JSON\n"
+              << "  --json-entropy      : Export entropy anomalies JSON\n"
               << "\nOTHER FLAGS:\n"
               << "  --help              : Show this help message\n";
 }
@@ -91,12 +87,12 @@ int main(int argc, char* argv[]) {
     std::string ana_perc_len = "";
     std::string ana_perc_entropy = "";
 
-    // Variables for Visualize configuration
-    bool vis_complete = false;
-    bool vis_partial = false;
-    bool vis_freq = false;
-    bool vis_len = false;
-    bool vis_entropy = false;
+    // Variables for JSON configuration
+    bool json_complete = false;
+    bool json_partial = false;
+    bool json_freq = false;
+    bool json_len = false;
+    bool json_entropy = false;
 
     // --- PARSING FLAGS ---
     for (int i = 3; i < argc; ++i) {
@@ -122,12 +118,12 @@ int main(int argc, char* argv[]) {
         else if (starts_with(arg, "--perc-entropy=")) {
             ana_perc_entropy= arg.substr(15);
         }
-        // 3. Capture Visualize flags
-        else if (arg == "--visual-complete") vis_complete = true;
-        else if (arg == "--visual-partial") vis_partial = true;
-        else if (arg == "--visual-freq") vis_freq = true;
-        else if (arg == "--visual-len") vis_len = true;
-        else if (arg == "--visual-entropy") vis_entropy = true;
+        // 3. Capture JSON flags
+        else if (arg == "--json-complete") json_complete = true;
+        else if (arg == "--json-partial") json_partial = true;
+        else if (arg == "--json-freq") json_freq = true;
+        else if (arg == "--json-len") json_len = true;
+        else if (arg == "--json-entropy") json_entropy = true;
 
         else {
             std::cout << "[WARNING] Unknown flag: " << arg << std::endl;
@@ -172,36 +168,14 @@ int main(int argc, char* argv[]) {
         analyze_cmd << " --perc-entropy=" << ana_perc_entropy;
     }
     
-    std::vector<VisualTask> tasks;
-
-    // Helper lambda to add tasks
-    auto addTask = [&](const std::string& flag, const std::string& name) {
-        analyze_cmd << " " << flag;
-        std::string json = output_dir + "/" + name + ".json";
-        std::string png = output_dir + "/" + name + ".png";
-        tasks.push_back({json, png});
-    };
-
-    if (vis_complete) addTask("--json-complete", "complete_trie");
-    if (vis_partial)  addTask("--json-partial", "partial_trie");
-    if (vis_freq)     addTask("--json-freq", "frequency_anomalies");
-    if (vis_len)      addTask("--json-len", "length_anomalies");
-    if (vis_entropy)  addTask("--json-entropy", "entropy_anomalies");
+    if (json_complete) analyze_cmd << " --json-complete";
+    if (json_partial)  analyze_cmd << " --json-partial";
+    if (json_freq)     analyze_cmd << " --json-freq";
+    if (json_len)      analyze_cmd << " --json-len";
+    if (json_entropy)  analyze_cmd << " --json-entropy";
 
     // std::cout << analyze_cmd.str() << std::endl;
     run_command("Analyze Module", analyze_cmd.str());
-
-    // --- STEP 3: VISUALIZE ---
-    if (tasks.empty()) {
-        std::cout << "[INFO] No visualization requested." << std::endl;
-    } else {
-        for (const auto& task : tasks) {
-            std::stringstream vis_cmd;
-            vis_cmd << BIN_VISUALIZE << " \"" << task.json_path << "\" \"" << task.png_path << "\"";
-            // std::cout << vis_cmd.str() << std::endl;
-            run_command("Visualize (" + task.json_path + ")", vis_cmd.str());
-        }
-    }
 
     std::cout << "\nResults at: " << output_dir << std::endl;
     return 0;
