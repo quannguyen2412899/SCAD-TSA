@@ -486,6 +486,79 @@ td.anomaly-badge {
     color: var(--warning-color);
 }
 
+/* Trie Export Panel */
+.trie-export-panel {
+    background: rgba(15, 23, 42, 0.4);
+    border: 1px solid var(--border-color);
+    padding: 1.25rem 1.5rem;
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.export-label {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.export-controls {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+#export-trie-select {
+    background-color: rgba(15, 23, 42, 0.7);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 0.625rem 1rem;
+    color: var(--text-primary);
+    font-family: inherit;
+    font-size: 0.875rem;
+    cursor: pointer;
+    min-width: 250px;
+    outline: none;
+    transition: all 0.2s ease;
+}
+
+#export-trie-select:focus {
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.15);
+}
+
+.btn-download-action {
+    background: var(--primary-gradient);
+    border: none;
+    border-radius: 8px;
+    padding: 0.625rem 1.25rem;
+    color: white;
+    font-family: inherit;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    box-shadow: 0 4px 12px rgba(6, 182, 212, 0.2);
+}
+
+.btn-download-action:hover {
+    background: var(--hover-gradient);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(6, 182, 212, 0.3);
+}
+
+.btn-download-action:active {
+    transform: translateY(0);
+}
+
 /* Visual Rendering Container */
 .visual-container {
     margin-top: 2rem;

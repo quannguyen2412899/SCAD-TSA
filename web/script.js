@@ -138,38 +138,8 @@ async function handleResponse(response) {
     insertTable("table-entropy", tables.entropyAnomalies, "Không phát hiện thấy bất thường Entropy.");
     insertTable("table-all", tables.allEntries, "Không có dữ liệu.");
 
-    // Handle JSON file downloads
-    const visuals = data.visuals || {};
-    const jsonMapping = {
-        "box-freq": "freq",
-        "box-len": "len",
-        "box-entropy": "entropy",
-        "box-all": "complete"
-    };
-
-    for (const [boxId, key] of Object.entries(jsonMapping)) {
-        const boxDiv = document.getElementById(boxId);
-        
-        // Remove old visual container if it exists
-        const oldVisual = boxDiv.querySelector('.visual-container');
-        if (oldVisual) oldVisual.remove();
-
-        const jsonUrl = visuals[key] ? visuals[key].json : null;
-
-        if (jsonUrl) {
-            const visualContainer = document.createElement("div");
-            visualContainer.className = "visual-container";
-            visualContainer.innerHTML = `
-                <h3>📁 Cấu Trúc Cây Trie (Định dạng JSON)</h3>
-                <div class="download-buttons-group">
-                    <a href="${jsonUrl}" download class="btn-download btn-download-json">
-                        📥 Tải file JSON cấu trúc Trie
-                    </a>
-                </div>
-            `;
-            boxDiv.appendChild(visualContainer);
-        }
-    }
+    // Save JSON urls for the unified export panel
+    window.currentVisuals = data.visuals || {};
 
     // Scroll to results
     resultsCard.scrollIntoView({ behavior: 'smooth' });
@@ -235,6 +205,35 @@ function insertTable(divId, csvString, emptyMessage) {
     
     html += "</tbody></table>";
     container.innerHTML = html;
+}
+
+// 6. Handle Unified JSON Export Download
+function downloadSelectedTrie() {
+    if (!window.currentVisuals) {
+        alert("Không tìm thấy dữ liệu cây Trie. Vui lòng chạy phân tích trước!");
+        return;
+    }
+    const selectEl = document.getElementById("export-trie-select");
+    const selectedKey = selectEl.value;
+    const visualObj = window.currentVisuals[selectedKey];
+    
+    if (visualObj && visualObj.json) {
+        const a = document.createElement("a");
+        a.href = visualObj.json;
+        
+        // Define clean filename for the download
+        let filename = `${selectedKey}_trie.json`;
+        if (selectedKey === "complete") filename = "complete_trie.json";
+        else if (selectedKey === "partial") filename = "partial_trie.json";
+        else if (selectedKey === "freq") filename = "frequency_anomalies.json";
+        else if (selectedKey === "len") filename = "length_anomalies.json";
+        else if (selectedKey === "entropy") filename = "entropy_anomalies.json";
+        
+        a.download = filename;
+        a.click();
+    } else {
+        alert("Không tìm thấy tệp JSON tương ứng cho lựa chọn này.");
+    }
 }
 
 // Finished handling response

@@ -112,6 +112,21 @@
                         </div>
                     </div>
 
+                    <!-- Trie Export Panel -->
+                    <div class="trie-export-panel">
+                        <span class="export-label">🌳 Tải tệp cấu trúc dữ liệu Trie:</span>
+                        <div class="export-controls">
+                            <select id="export-trie-select">
+                                <option value="complete">Toàn bộ cây Trie (complete_trie.json)</option>
+                                <option value="partial" selected>Cây chứa các bất thường (partial_trie.json)</option>
+                                <option value="freq">Cây bất thường tần suất (frequency_anomalies.json)</option>
+                                <option value="len">Cây bất thường độ dài (length_anomalies.json)</option>
+                                <option value="entropy">Cây bất thường Entropy (entropy_anomalies.json)</option>
+                            </select>
+                            <button id="btn-download-trie" onclick="downloadSelectedTrie()" class="btn-download-action">📥 Tải JSON</button>
+                        </div>
+                    </div>
+
                     <div class="tab-header">
                         <button class="tab-button active" onclick="openTab('box-freq', this)">🚨 Tần suất</button>
                         <button class="tab-button" onclick="openTab('box-len', this)">📏 Độ dài</button>
