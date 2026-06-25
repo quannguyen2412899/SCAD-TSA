@@ -1,0 +1,84 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    /* font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; */
+    background-color: #f4f7f6;
+}
+
+#upload {
+    border: 1px solid #000000;
+    margin-bottom: 5px;
+}
+
+#config {
+    display: none;
+    border: 1px solid #000000;
+    width: 100%;
+}
+
+#preprocess-config {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    gap: 5px
+}
+
+#analyze-config {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    gap: 10px;
+}
+
+#run {
+    display: none;  /* flex */
+    align-items: center;
+    justify-content: center;
+    width: 200px;
+    height: 50px;
+    margin: auto;
+}
+
+#results {
+    display: none;
+}
+
+.tab-button {
+    opacity: 0.5;
+    background-color: #eee;
+}
+
+.tab-button.active {
+    opacity: 1.0; 
+    background-color: #fff;
+    font-weight: bold;
+}
+
+#box-len {
+    display: none;
+}
+
+#box-entropy {
+    display: none;
+}
+
+table {
+    border-collapse: collapse; /* Makes borders single lines instead of double */
+    width: auto;
+}
+
+table, th, td {
+    border: 1px solid black; /* The classic "old school" border */
+    padding: 10px;            /* Gives the text some breathing room */
+    text-align: left;        /* Aligns text to the left */
+}
+
+th {
+    background-color: #f2f2f2; /* Light grey to make the header stand out */
+}
