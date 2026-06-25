@@ -44,14 +44,27 @@ Server sẽ chạy ở chế độ **live reload** tại cổng **8000** (`http:
 
 ---
 
-## 3. Kiểm thử API `/api/analyze`
-Để kiểm tra xem API hoạt động ổn định hay không, bạn có thể gửi một request POST bằng `curl` ở một cửa sổ terminal mới:
+## 3. Trải nghiệm ứng dụng Web và Kiểm thử API
+
+### A. Truy cập giao diện Web trực quan (Khuyến nghị)
+Sau khi khởi chạy API server thành công ở Bước 2, hãy mở trình duyệt web và truy cập địa chỉ:
+```
+http://127.0.0.1:8000
+```
+Tại giao diện web này, bạn có thể:
+1. Nhấp chọn file để tải lên file log của bạn.
+2. Thiết lập các tham số tiền xử lý (Delimiters, Ignored characters, Regex) và các ngưỡng bách phân vị thống kê (Frequency, Length, Entropy).
+3. Nhấp nút **Run analysis** để thực hiện phân tích. Các bảng dữ liệu bất thường được phát hiện sẽ hiển thị trực quan dưới 3 tab: **Frequency**, **Length**, và **Entropy**.
+
+### B. Kiểm thử API `/api/analyze` bằng dòng lệnh (Dành cho Developer)
+Bạn có thể gửi một request POST bằng `curl` ở một cửa sổ terminal mới:
 ```bash
 curl -X POST -F "uploadFile=@path/to/your/log_file.log" -F "config={\"delim\":\"\\n\",\"ignore\":\"\\r\",\"regex\":\"\",\"frequencyPerc\":5,\"lengthPerc\":5,\"entropyPerc\":95,\"visual\":\"partial\"}" http://127.0.0.1:8000/api/analyze
 ```
 *(Thay thế `path/to/your/log_file.log` bằng đường dẫn thực tế đến file log của bạn).*
 
-Bạn cũng có thể chạy file script kiểm thử tự động đi kèm trong môi trường phát triển:
+Hoặc chạy file script kiểm thử tự động đi kèm trong môi trường phát triển:
 ```bash
 python C:\Users\trant\.gemini\antigravity-ide\scratch\test_api_running.py
 ```
+
